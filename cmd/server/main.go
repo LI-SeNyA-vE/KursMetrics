@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	metricStor "github.com/LI-SeNyA-vE/YaGo/internal/incriment1/metricStorage"
+	metricStor "github.com/LI-SeNyA-vE/YaGo/internal/incriment1/handlers"
 )
 
 /* func NotUpdate(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +17,7 @@ func NoGaugeOrCounter(w http.ResponseWriter, r *http.Request) {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.Handle("/", metricStor.Metric)
+	mux.Handle("/", &metricStor.MyStruct{})
 	fmt.Println("Открыт сервер http://localhost:8080")
 	err := http.ListenAndServe(`:8080`, mux)
 	if err != nil {
