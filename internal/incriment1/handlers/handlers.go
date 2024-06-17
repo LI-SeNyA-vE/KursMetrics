@@ -2,28 +2,39 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"net/http"
-	"strings"
 
-	serverMetric "github.com/LI-SeNyA-vE/YaGo/internal/incriment1/server"
-	storageMetric "github.com/LI-SeNyA-vE/YaGo/internal/incriment1/storage"
+	serverMetric "github.com/LI-SeNyA-vE/KursMetrics/internal/incriment1/server"
+	storageMetric "github.com/LI-SeNyA-vE/KursMetrics/internal/incriment1/storage"
+	"github.com/go-chi/chi/v5"
 )
 
-type MyStruct storageMetric.MetricStorage
-
-func (m *MyStruct) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("URL: ", r.URL.Path)        //Можно удалить
-	parts := strings.Split(r.URL.Path, "/") //Разделение приходящего URL по знаку '/'
-	if serverMetric.ValidationLengthsURL(parts, w) {
-		return
-	}
-
-	update, typeMetric, nameMetric, countMetric := parts[1], parts[2], parts[3], parts[4]
-	if serverMetric.ValidationFirstElementURL(update, "update", w) {
-		return
-	}
+func CorrectPostRequest(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("URL: ", r.URL.Path)
+	typeMetric := chi.URLParam(r, "typeMetric")
+	nameMetric := chi.URLParam(r, "nameMetric")
+	countMetric := chi.URLParam(r, "countMetric")
 	if serverMetric.ValidationTypeMetric(typeMetric, nameMetric, countMetric, w) {
 		return
 	}
 	w.WriteHeader(http.StatusOK) //Отправляет ответ что всё ОК
+}
+
+func CorrectGetRequest(w http.ResponseWriter, r *http.Request) {
+	nameMetric := chi.URLParam(r, "nameMetric")
+	typeMetric := chi.URLParam(r, "typeMetric")
+	value, err := storageMetric.Metric.GetValue(typeMetric, nameMetric)
+	if !err {
+		io.WriteString(w, fmt.Sprint(value))
+		w.WriteHeader(http.StatusOK)
+	} else {
+		w.WriteHeader(http.StatusNotFound)
+	}
+}
+
+func AllValue(w http.ResponseWriter, r *http.Request) {
+	v := storageMetric.Metric
+	w.WriteHeader(http.StatusOK)
+	io.WriteString(w, fmt.Sprint(v))
 }

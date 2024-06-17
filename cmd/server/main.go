@@ -1,25 +1,27 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"net/http"
 
-	metricStor "github.com/LI-SeNyA-vE/YaGo/internal/incriment1/handlers"
+	metricHandlers "github.com/LI-SeNyA-vE/KursMetrics/internal/incriment1/handlers"
+	"github.com/go-chi/chi/v5"
 )
 
-/* func NotUpdate(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "No update", http.StatusBadRequest)
-}
-
-func NoGaugeOrCounter(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "Это не 'gauge' и не 'counter' запросы", http.StatusBadRequest)
-} */
+var (
+	addressAndPort = flag.String("a", "localhost:8080", "address and port")
+)
 
 func main() {
-	mux := http.NewServeMux()
-	mux.Handle("/", &metricStor.MyStruct{})
-	fmt.Println("Открыт сервер http://localhost:8080")
-	err := http.ListenAndServe(`:8080`, mux)
+	r := chi.NewRouter()
+
+	flag.Parse()
+	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", metricHandlers.CorrectPostRequest)
+	r.Get("/value/{typeMetric}/{nameMetric}", metricHandlers.CorrectGetRequest)
+	r.Get("/", metricHandlers.AllValue)
+	fmt.Println("Открыт сервер ", *addressAndPort)
+	err := http.ListenAndServe(*addressAndPort, r)
 	if err != nil {
 		panic(err)
 	}

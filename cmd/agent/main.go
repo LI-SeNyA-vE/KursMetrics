@@ -1,12 +1,29 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"math/rand"
-	"net/http"
 	"runtime"
+
 	"time"
+
+	"github.com/caarlos0/env/v6"
+	"github.com/go-resty/resty/v2"
 )
+
+var (
+	addressAndPort = flag.String("a", "localhost:8080", "Указываем адресс и порт по которому будем потключаться")
+	reportInterval = flag.Int64("r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
+	pollInterval   = flag.Int64("p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
+)
+
+type Config struct {
+	address        string `env:"ADDRESS"`
+	reportInterval uint8  `env:"REPORT_INTERVAL"`
+	pollInterval   uint8  `env:"POLL_INTERVAL"`
+}
 
 type CounterMetrics struct {
 	PollCount int64
@@ -83,7 +100,7 @@ func collectCounterMetrics(m *CounterMetrics) {
 }
 
 func sendMetrics(g *GaugeMetrics, c *CounterMetrics) {
-	client := &http.Client{}
+	client := resty.New()
 	gaugeMetrics := map[string]float64{
 		"Alloc":         g.Alloc,
 		"BuckHashSys":   g.BuckHashSys,
@@ -120,49 +137,45 @@ func sendMetrics(g *GaugeMetrics, c *CounterMetrics) {
 	}
 
 	for nameMetric, value := range gaugeMetrics {
-		url := fmt.Sprintf("http://localhost:8080/update/gauge/%s/%f", nameMetric, value)
-		req, err := http.NewRequest("POST", url, nil)
+		url := fmt.Sprintf("http://%s/update/gauge/%s/%f", *addressAndPort, nameMetric, value)
+		_, err := client.R().SetHeader("Content-Type", "text/plain").Post(url)
 		if err != nil {
 			fmt.Printf("Ошибка при создании запроса для метрики %s: %s", nameMetric, err)
 			return
 		}
-		req.Header.Set("Content-Type", "text/plain")
-
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Printf("Ошибка при отправке метрики %s: %s", nameMetric, err)
-			return
-		}
-		defer resp.Body.Close()
 	}
 
 	for nameMetric, value := range counterMetrics {
-		url := fmt.Sprintf("http://localhost:8080/update/gauge/%s/%v", nameMetric, value)
-		req, err := http.NewRequest("POST", url, nil)
+		url := fmt.Sprintf("http://%s/update/counter/%s/%b", *addressAndPort, nameMetric, value)
+		_, err := client.R().SetHeader("Content-Type", "text/plain").Post(url)
 		if err != nil {
 			fmt.Printf("Ошибка при создании запроса для метрики %s: %s", nameMetric, err)
 			return
 		}
-		req.Header.Set("Content-Type", "text/plain")
-
-		resp, err := client.Do(req)
-		if err != nil {
-			fmt.Printf("Ошибка при отправке метрики %s: %s", nameMetric, err)
-			return
-		}
-		defer resp.Body.Close()
 	}
 }
 
 func main() {
+	var cfg Config
+	err := env.Parse(&cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	flag.Parse()
 	gaugeMetrics := &GaugeMetrics{}
 	counterMetrics := &CounterMetrics{}
+	ticker1 := time.NewTicker(time.Duration(*pollInterval) * time.Second)
+	ticker2 := time.NewTicker(time.Duration(*reportInterval) * time.Second)
 	for {
-		collectGaugeMetrics(gaugeMetrics)
-		collectCounterMetrics(counterMetrics)
-		sendMetrics(gaugeMetrics, counterMetrics)
+		select {
+		case <-ticker1.C:
+			collectGaugeMetrics(gaugeMetrics)
+			collectCounterMetrics(counterMetrics)
+			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *pollInterval)
+		case <-ticker2.C:
+			sendMetrics(gaugeMetrics, counterMetrics)
+			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *reportInterval)
+		}
 
-		fmt.Println("Пауза 5 сек")
-		time.Sleep(5 * time.Second)
 	}
 }

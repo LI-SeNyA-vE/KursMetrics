@@ -5,26 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
-	storageMetric "github.com/LI-SeNyA-vE/YaGo/internal/incriment1/storage"
+	storageMetric "github.com/LI-SeNyA-vE/KursMetrics/internal/incriment1/storage"
 )
-
-// Проверяет количство запросов в URL
-func ValidationLengthsURL(parts []string, w http.ResponseWriter) bool {
-	if len(parts) < 5 { //Проверка на то, что приходят все элементы //ВОЗМОЖНО НУЖНО УБРАТЬ ЧТО БЫ ОБРАБАТЫВАТЬ БОЛЬШЕ ОШИБОК
-		http.Error(w, "Короткий запрос", http.StatusNotFound) //Вывод error-ки
-		return true
-	}
-	return false
-}
-
-// Проверка на первый элемент URL
-func ValidationFirstElementURL(update string, name string, w http.ResponseWriter) bool {
-	if update != name { //Проверка что идёт запрос на обновление (update)
-		http.Error(w, "No update", http.StatusBadRequest) //Вывод error-ки
-		return true
-	}
-	return false
-}
 
 // Проверяет какую метрику передали
 func ValidationTypeMetric(typeMetric string, nameMetric string, countMetric string, w http.ResponseWriter) bool {

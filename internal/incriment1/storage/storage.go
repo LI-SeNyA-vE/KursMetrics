@@ -25,3 +25,14 @@ func (m *MetricStorage) UpdateGauge(name string, value float64) {
 func (m *MetricStorage) UpdateCounter(name string, value int64) {
 	m.Counter[name] += value
 }
+
+func (m *MetricStorage) GetValue(typeMetric string, nameMetric string) (interface{}, bool) {
+	if typeMetric == "gauge" {
+		return m.Gauge[nameMetric], false
+	} else if typeMetric == "counter" {
+		return m.Counter[nameMetric], false
+	} else {
+		return nil, true
+	}
+
+}

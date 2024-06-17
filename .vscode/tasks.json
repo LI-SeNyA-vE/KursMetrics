@@ -1,0 +1,36 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "go: run open file",
+            "type": "shell",
+            "command": "go",
+            "args": [
+                "run",
+                "${file}"
+            ],
+            "problemMatcher": [
+                "$go"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "Запуск текущего открытого файла с использованием команды go run"
+        },
+        {
+            "label": "cd to file directory",
+            "type": "shell",
+            "command": "cd",
+            "args": [
+                "${fileDirname}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": false
+            },
+            "detail": "Переход в директорию текущего открытого файла"
+        }
+    ]
+}
