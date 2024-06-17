@@ -21,8 +21,8 @@ var (
 
 type Config struct {
 	address        string `env:"ADDRESS"`
-	reportInterval uint8  `env:"REPORT_INTERVAL"`
-	pollInterval   uint8  `env:"POLL_INTERVAL"`
+	reportInterval int64  `env:"REPORT_INTERVAL"`
+	pollInterval   int64  `env:"POLL_INTERVAL"`
 }
 
 type CounterMetrics struct {
@@ -157,11 +157,23 @@ func sendMetrics(g *GaugeMetrics, c *CounterMetrics) {
 
 func main() {
 	var cfg Config
+
+	flag.Parse()
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	flag.Parse()
+
+	if cfg.address != "" {
+		addressAndPort = &cfg.address
+	}
+	if cfg.reportInterval != 0 {
+		reportInterval = &cfg.reportInterval
+	}
+	if cfg.pollInterval != 0 {
+		pollInterval = &cfg.pollInterval
+	}
+
 	gaugeMetrics := &GaugeMetrics{}
 	counterMetrics := &CounterMetrics{}
 	ticker1 := time.NewTicker(time.Duration(*pollInterval) * time.Second)
