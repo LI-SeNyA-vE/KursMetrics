@@ -1,0 +1,55 @@
+package logger
+
+import (
+	"net/http"
+	"time"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
+
+var Log *zap.Logger
+
+func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	enc.AppendString(t.Format("2006-01-02 15:04:05"))
+}
+
+func getCustomLoggerConfig(level string) (*zap.Logger, error) {
+	lvl, err := zap.ParseAtomicLevel(level)
+	if err != nil {
+		return nil, err
+	}
+	encoderConfig := zap.NewProductionEncoderConfig()
+	encoderConfig.EncodeTime = customTimeEncoder
+	encoderConfig.TimeKey = "time"
+
+	config := zap.Config{
+		Level:            lvl,
+		Development:      false,
+		Encoding:         "json",
+		EncoderConfig:    encoderConfig,
+		OutputPaths:      []string{"stdout"},
+		ErrorOutputPaths: []string{"stderr"},
+	}
+
+	return config.Build()
+}
+
+func Initialize(level string) error {
+	var err error
+	Log, err = getCustomLoggerConfig(level)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func RequestLogger(h http.HandlerFunc) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		Log.Debug("got incoming HTTP request",
+			zap.String("method", r.Method),
+			zap.String("path", r.URL.Path),
+		)
+		h(w, r)
+	})
+}
