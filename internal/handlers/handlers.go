@@ -24,8 +24,6 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 			return                                               //
 		}
 		storageMetric.Metric.UpdateGauge(nameMetric, count)
-		fmt.Println("Это gauge запрос")
-		fmt.Println(storageMetric.Metric.Gauge)
 	case "counter": //Если передано значение 'counter'
 		{
 			count, err := strconv.ParseInt(countMetric, 10, 64) //Проверка что переданно число и его можно перевети в int64
@@ -34,8 +32,6 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 				return                                               //
 			}
 			storageMetric.Metric.UpdateCounter(nameMetric, count)
-			fmt.Println("Это counter запрос")
-			fmt.Println(storageMetric.Metric.Counter)
 		}
 	default: //Если передано другое значение значение
 		{

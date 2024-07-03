@@ -44,12 +44,46 @@ func Initialize(level string) error {
 	return nil
 }
 
-func RequestLogger(h http.HandlerFunc) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		Log.Debug("got incoming HTTP request",
-			zap.String("method", r.Method),
-			zap.String("path", r.URL.Path),
+type (
+	// берём структуру для хранения сведений об ответе
+	responseData struct {
+		status int
+		uri    string
+	}
+
+	// добавляем реализацию http.ResponseWriter
+	loggingResponseWriter struct {
+		http.ResponseWriter // встраиваем оригинальный http.ResponseWriter
+		responseData        *responseData
+	}
+)
+
+func (r *loggingResponseWriter) WriteHeader(statusCode int) {
+	r.responseData.status = statusCode
+}
+
+func LoggingMiddleware(h http.Handler) http.Handler {
+	logFn := func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now() // функция Now() возвращает текущее время
+		responseData := &responseData{
+			status: 0,
+			uri:    r.RequestURI, // Захват URI из запроса
+		}
+		lw := loggingResponseWriter{
+			ResponseWriter: w, // встраиваем оригинальный http.ResponseWriter
+			responseData:   responseData,
+		}
+
+		h.ServeHTTP(&lw, r)           // точка, где выполняется хендлер pingHandler // обслуживание оригинального запроса
+		duration := time.Since(start) // Since возвращает разницу во времени между start
+
+		Log.Sugar().Infoln(
+			"uri:", r.RequestURI,
+			"method:", r.Method,
+			"status:", responseData.status, // получаем перехваченный код статуса ответа
+			"duration:", duration,
+			"size:", len(responseData.uri), // получаем перехваченный размер ответа
 		)
-		h(w, r)
-	})
+	}
+	return http.HandlerFunc(logFn) // возвращаем функционально расширенный хендлер
 }
