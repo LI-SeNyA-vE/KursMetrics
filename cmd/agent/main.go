@@ -20,7 +20,7 @@ func main() {
 	for {
 		select {
 		case <-ticker1.C:
-			funcAgent.UpdateMetric()
+			gaugeMetrics, counterMetrics = funcAgent.UpdateMetric()
 			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *config.PollInterval)
 		case <-ticker2.C:
 			funcAgent.SendMetricsGauge(gaugeMetrics, "gauge")
