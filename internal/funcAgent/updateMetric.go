@@ -40,7 +40,7 @@ func UpdateMetric() (map[string]float64, map[string]int64) {
 		"RandomValue":   float64(rand.Float64()),
 	}
 	mapMetricsCounter := map[string]int64{
-		"PollInterval": 1,
+		"PollCount": 1,
 	}
 
 	return mapMetricsGauge, mapMetricsCounter
