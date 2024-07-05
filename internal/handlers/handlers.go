@@ -56,11 +56,10 @@ func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	typeMetric := chi.URLParam(r, "typeMetric")
 	value, err := storageMetric.Metric.GetValue(typeMetric, nameMetric)
 	if err != nil {
-		io.WriteString(w, fmt.Sprint(value))
-		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
+	io.WriteString(w, fmt.Sprint(value))
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK)
 }
@@ -89,6 +88,7 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html")
+	w.WriteHeader(http.StatusOK)
 }
 
 func JsonValue(w http.ResponseWriter, r *http.Request) {
