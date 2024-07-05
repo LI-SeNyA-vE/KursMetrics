@@ -40,14 +40,15 @@ func (m *MetricStorage) GetAllCounters() map[string]int64 {
 
 func (m *MetricStorage) GetValue(typeMetric string, nameMetric string) (interface{}, error) {
 	if typeMetric == "gauge" {
-		v := m.Gauge[nameMetric]
-		return v, nil
+		if v, ok := m.Gauge[nameMetric]; ok {
+			return v, nil
+		}
 	}
 	if typeMetric == "counter" {
-		v := m.Counter[nameMetric]
-		return v, nil
+		if v, ok := m.Counter[nameMetric]; ok {
+			return v, nil
+		}
 	}
-
 	return nil, fmt.Errorf("нет метрики:%s, типа:%s", nameMetric, typeMetric)
 
 	/* if v, ok := m.Gauge[nameMetric]; ok {
