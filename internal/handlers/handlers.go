@@ -59,11 +59,11 @@ func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		io.WriteString(w, fmt.Sprint(value))
 		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusNotFound)
+	w.WriteHeader(http.StatusOK)
 }
 
 func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
