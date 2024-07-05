@@ -44,4 +44,5 @@ func InitializeGlobals(cfg Config) {
 	if cfg.LogLevel != "" {
 		*LogLevel = cfg.LogLevel
 	}
+
 }

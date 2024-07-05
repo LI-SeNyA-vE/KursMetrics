@@ -1,5 +1,11 @@
 package storage
 
+import (
+	"fmt"
+)
+
+var Metric = NewMetricStorage()
+
 // Структура для хранения метрик в памяти
 type MetricStorage struct {
 	Gauge   map[string]float64
@@ -13,8 +19,6 @@ func NewMetricStorage() *MetricStorage {
 		Counter: make(map[string]int64),
 	}
 }
-
-var Metric = NewMetricStorage()
 
 // Обновление значения gauge метрики (Замена значения)
 func (m *MetricStorage) UpdateGauge(name string, value float64) {
@@ -34,13 +38,23 @@ func (m *MetricStorage) GetAllCounters() map[string]int64 {
 	return m.Counter
 }
 
-func (m *MetricStorage) GetValue(typeMetric string, nameMetric string) (interface{}, bool) {
+func (m *MetricStorage) GetValue(typeMetric string, nameMetric string) (interface{}, error) {
 	if typeMetric == "gauge" {
-		return m.Gauge[nameMetric], false
-	} else if typeMetric == "counter" {
-		return m.Counter[nameMetric], false
-	} else {
-		return nil, true
+		v := m.Gauge[nameMetric]
+		return v, nil
+	}
+	if typeMetric == "counter" {
+		v := m.Counter[nameMetric]
+		return v, nil
 	}
 
+	return nil, fmt.Errorf("нет метрики:%s, типа:%s", nameMetric, typeMetric)
+
+	/* if v, ok := m.Gauge[nameMetric]; ok {
+		return v, nil
+	}
+	if v, ok := m.Counter[nameMetric]; ok {
+		return v, nil
+	}
+	return nil, fmt.Errorf("нет метрики:%s, типа:%s", nameMetric, typeMetric) */
 }

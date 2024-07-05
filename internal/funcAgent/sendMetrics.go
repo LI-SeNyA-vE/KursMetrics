@@ -8,7 +8,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-func SendMetricsGauge(mapMetric map[string]Gauge, metricType string) {
+func SendMetricsGauge(mapMetric map[string]float64, metricType string) {
 	for nameMetric, value := range mapMetric {
 		client := resty.New()
 		url := fmt.Sprintf("http://%s/update/%s/%s/%f", *config.AddressAndPort, metricType, nameMetric, value)
@@ -19,7 +19,7 @@ func SendMetricsGauge(mapMetric map[string]Gauge, metricType string) {
 	}
 }
 
-func SendMetricsCounter(mapMetric map[string]Counter, metricType string) {
+func SendMetricsCounter(mapMetric map[string]int64, metricType string) {
 	for nameMetric, value := range mapMetric {
 		client := resty.New()
 		url := fmt.Sprintf("http://%s/update/%s/%s/%d", *config.AddressAndPort, metricType, nameMetric, value)

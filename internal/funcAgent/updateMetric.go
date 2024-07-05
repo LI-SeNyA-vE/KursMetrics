@@ -5,42 +5,42 @@ import (
 	"runtime"
 )
 
-func (sm *SystemMetrics) UpdateMetric() (map[string]Gauge, map[string]Counter) {
+func UpdateMetric() (map[string]float64, map[string]int64) {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
 
-	mapMetricsGauge := map[string]Gauge{
-		"Alloc":         Gauge(memStats.Alloc),
-		"BuckHashSys":   Gauge(memStats.BuckHashSys),
-		"Frees":         Gauge(memStats.Frees),
-		"GCCPUFraction": Gauge(memStats.GCCPUFraction),
-		"GCSys":         Gauge(memStats.GCSys),
-		"HeapAlloc":     Gauge(memStats.HeapAlloc),
-		"HeapIdle":      Gauge(memStats.HeapIdle),
-		"HeapInuse":     Gauge(memStats.HeapInuse),
-		"HeapObjects":   Gauge(memStats.HeapObjects),
-		"HeapReleased":  Gauge(memStats.HeapReleased),
-		"HeapSys":       Gauge(memStats.HeapSys),
-		"LastGC":        Gauge(memStats.LastGC),
-		"Lookups":       Gauge(memStats.Lookups),
-		"MCacheInuse":   Gauge(memStats.MCacheInuse),
-		"MCacheSys":     Gauge(memStats.MCacheSys),
-		"MSpanInuse":    Gauge(memStats.MSpanInuse),
-		"MSpanSys":      Gauge(memStats.MSpanSys),
-		"Mallocs":       Gauge(memStats.Mallocs),
-		"NextGC":        Gauge(memStats.NextGC),
-		"NumForcedGC":   Gauge(memStats.NumForcedGC),
-		"NumGC":         Gauge(memStats.NumGC),
-		"OtherSys":      Gauge(memStats.OtherSys),
-		"PauseTotalNs":  Gauge(memStats.PauseTotalNs),
-		"StackInuse":    Gauge(memStats.StackInuse),
-		"StackSys":      Gauge(memStats.StackSys),
-		"Sys":           Gauge(memStats.Sys),
-		"TotalAlloc":    Gauge(memStats.TotalAlloc),
-		"RandomValue":   Gauge(rand.Float64()),
+	mapMetricsGauge := map[string]float64{
+		"Alloc":         float64(memStats.Alloc),
+		"BuckHashSys":   float64(memStats.BuckHashSys),
+		"Frees":         float64(memStats.Frees),
+		"GCCPUFraction": float64(memStats.GCCPUFraction),
+		"GCSys":         float64(memStats.GCSys),
+		"HeapAlloc":     float64(memStats.HeapAlloc),
+		"HeapIdle":      float64(memStats.HeapIdle),
+		"HeapInuse":     float64(memStats.HeapInuse),
+		"HeapObjects":   float64(memStats.HeapObjects),
+		"HeapReleased":  float64(memStats.HeapReleased),
+		"HeapSys":       float64(memStats.HeapSys),
+		"LastGC":        float64(memStats.LastGC),
+		"Lookups":       float64(memStats.Lookups),
+		"MCacheInuse":   float64(memStats.MCacheInuse),
+		"MCacheSys":     float64(memStats.MCacheSys),
+		"MSpanInuse":    float64(memStats.MSpanInuse),
+		"MSpanSys":      float64(memStats.MSpanSys),
+		"Mallocs":       float64(memStats.Mallocs),
+		"NextGC":        float64(memStats.NextGC),
+		"NumForcedGC":   float64(memStats.NumForcedGC),
+		"NumGC":         float64(memStats.NumGC),
+		"OtherSys":      float64(memStats.OtherSys),
+		"PauseTotalNs":  float64(memStats.PauseTotalNs),
+		"StackInuse":    float64(memStats.StackInuse),
+		"StackSys":      float64(memStats.StackSys),
+		"Sys":           float64(memStats.Sys),
+		"TotalAlloc":    float64(memStats.TotalAlloc),
+		"RandomValue":   float64(rand.Float64()),
 	}
-	mapMetricsCounter := map[string]Counter{
-		"PollInterval": (sm.PollCount + 1),
+	mapMetricsCounter := map[string]int64{
+		"PollInterval": 1,
 	}
 
 	return mapMetricsGauge, mapMetricsCounter
