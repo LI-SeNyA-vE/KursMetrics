@@ -21,7 +21,6 @@ type Metrics struct {
 }
 
 func PostAddValue(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("URL: ", r.URL.Path)
 	typeMetric := chi.URLParam(r, "typeMetric")
 	nameMetric := chi.URLParam(r, "nameMetric")
 	countMetric := chi.URLParam(r, "countMetric")
