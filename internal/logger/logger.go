@@ -59,6 +59,7 @@ type (
 )
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
+	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode
 }
 
@@ -74,7 +75,7 @@ func LoggingMiddleware(h http.Handler) http.Handler {
 			responseData:   responseData,
 		}
 
-		h.ServeHTTP(&lw, r)           // точка, где выполняется хендлер pingHandler // обслуживание оригинального запроса
+		h.ServeHTTP(&lw, r)           // обслуживание оригинального запроса
 		duration := time.Since(start) // Since возвращает разницу во времени между start
 
 		Log.Sugar().Infoln(
