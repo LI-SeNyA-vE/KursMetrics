@@ -156,6 +156,28 @@ func JsonUpdate(w http.ResponseWriter, r *http.Request) {
 		storageMetric.Metric.UpdateGauge(metrics.ID, *metrics.Value)
 	}
 
+	metric, err := storageMetric.Metric.GetValue(metrics.MType, metrics.ID)
+	if err != nil {
+		http.Error(w, "не найдено", http.StatusNotFound)
+		return
+	}
+
+	switch metrics.MType {
+	case "counter":
+		v := metric.(int64)
+		metrics.Delta = &v
+	case "gauge":
+		v := metric.(float64)
+		metrics.Value = &v
+	}
+
+	resp, err := json.Marshal(metrics)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	w.Write(resp)
 }
