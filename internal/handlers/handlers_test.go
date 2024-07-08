@@ -35,6 +35,7 @@ func TestCorrectPostRequest(t *testing.T) {
 			r.ServeHTTP(rw, req)
 
 			res := rw.Result()
+			defer res.Body.Close()
 			// проверяем код ответа
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
@@ -68,6 +69,7 @@ func TestCorrectGetRequest(t *testing.T) {
 			r.ServeHTTP(rw, req)
 
 			res := rw.Result()
+			defer res.Body.Close()
 			// проверяем код ответа
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
@@ -101,6 +103,7 @@ func TestAllValue(t *testing.T) {
 			r.ServeHTTP(rw, req)
 
 			res := rw.Result()
+			defer res.Body.Close()
 			// проверяем код ответа
 			assert.Equal(t, tt.want.code, res.StatusCode)
 			assert.Equal(t, tt.want.contentType, res.Header.Get("Content-Type"))
