@@ -50,12 +50,4 @@ func (m *MetricStorage) GetValue(typeMetric string, nameMetric string) (interfac
 		}
 	}
 	return nil, fmt.Errorf("нет метрики:%s, типа:%s", nameMetric, typeMetric)
-
-	/* if v, ok := m.Gauge[nameMetric]; ok {
-		return v, nil
-	}
-	if v, ok := m.Counter[nameMetric]; ok {
-		return v, nil
-	}
-	return nil, fmt.Errorf("нет метрики:%s, типа:%s", nameMetric, typeMetric) */
 }

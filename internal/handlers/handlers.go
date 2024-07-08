@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -180,4 +181,20 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
+}
+
+func GzipMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Encoding") == "gzip" {
+			gz, err := gzip.NewReader(r.Body)
+			if err != nil {
+				http.Error(w, "Ошибка при создании gzip.Reader", http.StatusInternalServerError)
+				return
+			}
+			defer gz.Close()
+			// Замена r.Body на распакованный stream
+			r.Body = io.NopCloser(gz)
+		}
+		next.ServeHTTP(w, r)
+	})
 }
