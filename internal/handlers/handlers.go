@@ -91,7 +91,7 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func JsonValue(w http.ResponseWriter, r *http.Request) {
+func JSONValue(w http.ResponseWriter, r *http.Request) {
 	var metrics Metrics
 	var buf bytes.Buffer
 
@@ -133,7 +133,7 @@ func JsonValue(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-func JsonUpdate(w http.ResponseWriter, r *http.Request) {
+func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	var metrics Metrics
 	var buf bytes.Buffer
 

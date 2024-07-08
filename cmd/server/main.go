@@ -36,8 +36,8 @@ func main() {
 
 	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", handlers.PostAddValue)
 
-	r.Post("/value/", handlers.JsonValue)
-	r.Post("/update/", handlers.JsonUpdate)
+	r.Post("/value/", handlers.JSONValue)
+	r.Post("/update/", handlers.JSONUpdate)
 
 	r.Get("/value/{typeMetric}/{nameMetric}", handlers.GetReceivingMetric)
 	r.Get("/", handlers.GetReceivingAllMetric)
