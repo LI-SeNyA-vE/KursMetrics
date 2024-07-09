@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"strconv"
@@ -64,7 +63,7 @@ func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
+/* func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 	gauges := storageMetric.Metric.GetAllGauges()
 	counters := storageMetric.Metric.GetAllCounters()
 
@@ -73,22 +72,58 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 		Counter: counters,
 	}
 
-	tmplPath := "../../internal/templates/index.html"
+	tmplPath := filepath.Join("..", "..", "internal", "templates", "index.html")
 
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
+		logger.Log.Info("Ошибка 1 " + err.Error())
 		http.Error(w, fmt.Sprintf("Error parsing template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
+		logger.Log.Info("Ошибка 2 " + err.Error())
 		http.Error(w, fmt.Sprintf("Error executing template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
+} */
+
+func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
+	body := `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>All tuples</title>
+            </head>
+            <body>
+            <table>
+                <tr>
+                    <td>Metric</td>
+                    <td>Value</td>
+                </tr>
+    `
+	listC := storageMetric.Metric.GetAllCounters()
+	for k, v := range listC {
+		body = body + fmt.Sprintf("<tr>\n<td>%s</td>\n", k)
+		body = body + fmt.Sprintf("<td>%v</td>\n</tr>\n", v)
+	}
+
+	listG := storageMetric.Metric.GetAllGauges()
+	for k, v := range listG {
+		body = body + fmt.Sprintf("<tr>\n<td>%s</td>\n", k)
+		body = body + fmt.Sprintf("<td>%v</td>\n</tr>\n", v)
+	}
+
+	body = body + " </table>\n </body>\n</html>"
+
+	// respond to agent
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(body))
 }
 
 func JSONValue(w http.ResponseWriter, r *http.Request) {

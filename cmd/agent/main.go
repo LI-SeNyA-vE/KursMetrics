@@ -23,8 +23,8 @@ func main() {
 			gaugeMetrics, counterMetrics = funcAgent.UpdateMetric()
 			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *config.PollInterval)
 		case <-ticker2.C:
-			funcAgent.SendMetricsGauge(gaugeMetrics, "gauge")
-			funcAgent.SendMetricsCounter(counterMetrics, "counter")
+			funcAgent.SendJSONMetricsGauge(gaugeMetrics)
+			funcAgent.SendJSONMetricsCounter(counterMetrics)
 			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.RreportInterval)
 		}
 

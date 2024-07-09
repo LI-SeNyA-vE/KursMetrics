@@ -5,6 +5,7 @@ import (
 
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	"github.com/go-chi/chi/v5"
 )
@@ -29,9 +30,18 @@ func main() {
 	r := chi.NewRouter()
 
 	r.Use(func(h http.Handler) http.Handler {
-		return logger.LoggingMiddleware(h)
+		return middleware.LoggingMiddleware(h)
 	})
-
+	r.Use(func(h http.Handler) http.Handler {
+		return middleware.GzipMiddleware(h)
+	})
+	r.Use(func(h http.Handler) http.Handler {
+		return middleware.UnGzipMiddleware(h)
+	})
+	/* 	r.Use(func(h http.Handler) http.Handler {
+	return handlers.ZipMiddleware(h)
+	})
+	*/
 	// Разобрать что я натворил в коде до и в логере
 
 	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", handlers.PostAddValue)
