@@ -23,11 +23,11 @@ func gzipCompress(data []byte) ([]byte, error) {
 	writer := gzip.NewWriter(&buf)
 	_, err := writer.Write(data)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ошибка записи данных в gzip writer: %w", err)
 	}
 	err = writer.Close()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ошибка закрытия gzip writer: %w", err)
 	}
 	return buf.Bytes(), nil
 }
@@ -41,6 +41,14 @@ func SendMetricsGauge(mapMetric map[string]float64, metricType string) {
 			ID:    nameMetric,
 			MType: "gauge",
 			Value: &value,
+		}
+
+		testvalu := 1000.1
+
+		metrics = Metrics{
+			ID:    "test",
+			MType: "gauge",
+			Value: &testvalu,
 		}
 
 		jsonData, err := json.Marshal(metrics)
@@ -61,7 +69,7 @@ func SendMetricsGauge(mapMetric map[string]float64, metricType string) {
 			SetBody(compressedData).
 			Post(url)
 		if err != nil {
-			log.Printf("Не удалось отправить метрики типа %s с ошибкой: %v", metricType, err)
+			log.Printf("Не удалось отправить метрику %s типа %s с ошибкой: %v", metrics.ID, metrics.MType, err)
 		}
 	}
 
