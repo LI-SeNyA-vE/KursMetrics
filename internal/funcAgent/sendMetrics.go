@@ -32,7 +32,7 @@ func gzipCompress(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func SendMetricsGauge(mapMetric map[string]float64, metricType string) {
+func SendJSONMetricsGauge(mapMetric map[string]float64) {
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/update/", *config.AddressAndPort)
 
@@ -41,14 +41,6 @@ func SendMetricsGauge(mapMetric map[string]float64, metricType string) {
 			ID:    nameMetric,
 			MType: "gauge",
 			Value: &value,
-		}
-
-		testvalu := 1000.1
-
-		metrics = Metrics{
-			ID:    "test",
-			MType: "gauge",
-			Value: &testvalu,
 		}
 
 		jsonData, err := json.Marshal(metrics)
@@ -75,15 +67,16 @@ func SendMetricsGauge(mapMetric map[string]float64, metricType string) {
 
 }
 
-func SendMetricsCounter(mapMetric map[string]int64, metricType string) {
+func SendJSONMetricsCounter(mapMetric map[string]int64) {
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/update/", *config.AddressAndPort)
 
-	metrics := Metrics{}
 	for nameMetric, value := range mapMetric {
-		metrics.MType = metricType
-		metrics.ID = nameMetric
-		metrics.Delta = &value
+		metrics := Metrics{
+			ID:    nameMetric,
+			MType: "gauge",
+			Delta: &value,
+		}
 
 		jsonData, err := json.Marshal(metrics)
 		if err != nil {
@@ -103,7 +96,7 @@ func SendMetricsCounter(mapMetric map[string]int64, metricType string) {
 			SetBody(compressedData).
 			Post(url)
 		if err != nil {
-			log.Printf("Не удалось отправить метрики типа %s с ошибкой: %v", metricType, err)
+			log.Printf("Не удалось отправить метрику %s типа %s с ошибкой: %v", metrics.ID, metrics.MType, err)
 		}
 	}
 }
