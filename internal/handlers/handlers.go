@@ -7,8 +7,10 @@ import (
 	"html/template"
 	"io"
 	"net/http"
+	"path/filepath"
 	"strconv"
 
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	storageMetric "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
 )
@@ -73,7 +75,7 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 		Counter: counters,
 	}
 
-	tmplPath := "../../internal/templates/index.html"
+	tmplPath := filepath.Join("..", "..", "internal", "templates", "index.html")
 
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
@@ -83,6 +85,7 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
+		logger.Log.Info("Ошибка " + err.Error())
 		http.Error(w, fmt.Sprintf("Error executing template: %v", err), http.StatusInternalServerError)
 		return
 	}
