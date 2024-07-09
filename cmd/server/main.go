@@ -29,9 +29,9 @@ func main() {
 	config.InitializeGlobals(cfg)
 	r := chi.NewRouter()
 
-	r.Use(func(h http.Handler) http.Handler {
+	/* r.Use(func(h http.Handler) http.Handler {
 		return middleware.LoggingMiddleware(h)
-	})
+	}) */
 	r.Use(func(h http.Handler) http.Handler {
 		return middleware.GzipMiddleware(h)
 	})

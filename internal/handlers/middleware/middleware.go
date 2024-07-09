@@ -19,9 +19,10 @@ func GzipMiddleware(next http.Handler) http.Handler {
 			}
 			defer gz.Close()
 			// Замена r.Body на распакованный stream
+			w.Header().Set("Content-Encoding", "gzip") //зачем я это ПИСАЛ??!?!?!?!?!?!
 			r.Body = io.NopCloser(gz)
 		}
-		//w.Header().Set("Content-Encoding", "gzip") //зачем я это ПИСАЛ??!?!?!?!?!?!
+
 		next.ServeHTTP(w, r)
 	})
 }

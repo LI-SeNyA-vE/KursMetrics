@@ -58,6 +58,7 @@ func SendJSONMetricsGauge(mapMetric map[string]float64) {
 		_, err = client.R().
 			SetHeader("Content-Type", "application/json").
 			SetHeader("Content-Encoding", "gzip").
+			SetHeader("Accept-Encoding", "gzip").
 			SetBody(compressedData).
 			Post(url)
 		if err != nil {
