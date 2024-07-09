@@ -22,8 +22,8 @@ func GzipMiddleware(next http.Handler) http.Handler {
 			//зачем я это ПИСАЛ??!?!?!?!?!?!
 			r.Body = io.NopCloser(gz)
 		}
-		w.Header().Set("Content-Encoding", "gzip")
 		next.ServeHTTP(w, r)
+		w.Header().Set("Content-Encoding", "gzip")
 	})
 }
 
