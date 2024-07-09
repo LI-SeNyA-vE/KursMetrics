@@ -79,13 +79,14 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
+		logger.Log.Info("Ошибка 1 " + err.Error())
 		http.Error(w, fmt.Sprintf("Error parsing template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
-		logger.Log.Info("Ошибка " + err.Error())
+		logger.Log.Info("Ошибка 2 " + err.Error())
 		http.Error(w, fmt.Sprintf("Error executing template: %v", err), http.StatusInternalServerError)
 		return
 	}
