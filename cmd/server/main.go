@@ -36,8 +36,8 @@ func main() {
 		return middleware.GzipMiddleware(h)
 	})
 	/* 	r.Use(func(h http.Handler) http.Handler {
-	   		return handlers.ZipMiddleware(h)
-	   	})
+	return handlers.ZipMiddleware(h)
+	})
 	*/
 	// Разобрать что я натворил в коде до и в логере
 
