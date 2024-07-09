@@ -74,7 +74,7 @@ func SendJSONMetricsCounter(mapMetric map[string]int64) {
 	for nameMetric, value := range mapMetric {
 		metrics := Metrics{
 			ID:    nameMetric,
-			MType: "gauge",
+			MType: "counter",
 			Delta: &value,
 		}
 
