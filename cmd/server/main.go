@@ -68,6 +68,9 @@ func initializeStorage(cdFile string, resMetricBool bool) {
 }
 
 func startTicker(cdFile string, storeInterval int64) {
+	if storeInterval == 0 {
+		return
+	}
 	ticker1 := time.NewTicker(time.Duration(storeInterval) * time.Second)
 	defer ticker1.Stop()
 
