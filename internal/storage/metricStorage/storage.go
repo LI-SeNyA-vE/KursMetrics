@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-var Metric = NewMetricStorage()
+var StorageMetric = NewMetricStorage()
 
 // Структура для хранения метрик в памяти
 type MetricStorage struct {

@@ -15,17 +15,19 @@ func main() {
 
 	gaugeMetrics, counterMetrics := funcAgent.UpdateMetric()
 
-	ticker1 := time.NewTicker(time.Duration(*config.PollInterval) * time.Second)
-	ticker2 := time.NewTicker(time.Duration(*config.RreportInterval) * time.Second)
+	ticker1 := time.NewTicker(time.Duration(*config.FlagPollInterval) * time.Second)
+	ticker2 := time.NewTicker(time.Duration(*config.FlagRreportInterval) * time.Second)
+	defer ticker1.Stop()
+	defer ticker2.Stop()
 	for {
 		select {
 		case <-ticker1.C:
 			gaugeMetrics, counterMetrics = funcAgent.UpdateMetric()
-			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *config.PollInterval)
+			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *config.FlagPollInterval)
 		case <-ticker2.C:
 			funcAgent.SendJSONMetricsGauge(gaugeMetrics)
 			funcAgent.SendJSONMetricsCounter(counterMetrics)
-			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.RreportInterval)
+			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.FlagRreportInterval)
 		}
 
 	}

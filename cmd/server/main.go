@@ -2,11 +2,13 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
+	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -27,6 +29,11 @@ func main() {
 
 	cfg := config.GetConfig()
 	config.InitializeGlobals(cfg)
+
+	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore)
+
+	go func() { startTicker(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
+
 	r := chi.NewRouter()
 
 	r.Use(func(h http.Handler) http.Handler {
@@ -38,11 +45,6 @@ func main() {
 	r.Use(func(h http.Handler) http.Handler {
 		return middleware.UnGzipMiddleware(h)
 	})
-	/* 	r.Use(func(h http.Handler) http.Handler {
-	return handlers.ZipMiddleware(h)
-	})
-	*/
-	// Разобрать что я натворил в коде до и в логере
 
 	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", handlers.PostAddValue)
 
@@ -52,9 +54,24 @@ func main() {
 	r.Get("/value/{typeMetric}/{nameMetric}", handlers.GetReceivingMetric)
 	r.Get("/", handlers.GetReceivingAllMetric)
 
-	sugar.Log(logger.Log.Level(), "Открыт сервер ", *config.AddressAndPort)
-	err := http.ListenAndServe(*config.AddressAndPort, r)
+	sugar.Log(logger.Log.Level(), "Открыт сервер ", *config.FlagAddressAndPort)
+	err := http.ListenAndServe(*config.FlagAddressAndPort, r)
 	if err != nil {
 		panic(err)
+	}
+}
+
+func initializeStorage(cdFile string, resMetricBool bool) {
+	if resMetricBool {
+		metricStorage.LoadMetricFromFile(cdFile)
+	}
+}
+
+func startTicker(cdFile string, storeInterval int64) {
+	ticker1 := time.NewTicker(time.Duration(storeInterval) * time.Second)
+	defer ticker1.Stop()
+
+	for range ticker1.C {
+		metricStorage.SaveMetricToFile(cdFile)
 	}
 }

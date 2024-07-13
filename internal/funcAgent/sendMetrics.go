@@ -34,7 +34,7 @@ func gzipCompress(data []byte) ([]byte, error) {
 
 func SendJSONMetricsGauge(mapMetric map[string]float64) {
 	client := resty.New()
-	url := fmt.Sprintf("http://%s/update/", *config.AddressAndPort)
+	url := fmt.Sprintf("http://%s/update/", *config.FlagAddressAndPort)
 
 	for nameMetric, value := range mapMetric {
 		metrics := Metrics{
@@ -70,7 +70,7 @@ func SendJSONMetricsGauge(mapMetric map[string]float64) {
 
 func SendJSONMetricsCounter(mapMetric map[string]int64) {
 	client := resty.New()
-	url := fmt.Sprintf("http://%s/update/", *config.AddressAndPort)
+	url := fmt.Sprintf("http://%s/update/", *config.FlagAddressAndPort)
 
 	for nameMetric, value := range mapMetric {
 		metrics := Metrics{
