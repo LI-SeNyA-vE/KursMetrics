@@ -12,13 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
-
 func PostAddValue(w http.ResponseWriter, r *http.Request) {
 	typeMetric := chi.URLParam(r, "typeMetric")
 	nameMetric := chi.URLParam(r, "nameMetric")
@@ -127,8 +120,8 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 }
 
 func JSONValue(w http.ResponseWriter, r *http.Request) {
-	var metrics Metrics
 	var buf bytes.Buffer
+	var metrics storageMetric.Metrics
 
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
@@ -169,7 +162,7 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func JSONUpdate(w http.ResponseWriter, r *http.Request) {
-	var metrics Metrics
+	var metrics storageMetric.Metrics
 	var buf bytes.Buffer
 
 	_, err := buf.ReadFrom(r.Body)

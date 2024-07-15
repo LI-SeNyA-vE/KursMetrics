@@ -12,13 +12,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
-
 func main() {
 	if err := logger.Initialize("debug"); err != nil {
 		panic(err)
@@ -26,39 +19,14 @@ func main() {
 	defer logger.Log.Sync()
 
 	sugar := *logger.Log.Sugar()
-
-	cfg := config.GetConfig()
-	config.InitializeGlobals(cfg)
-
+	//Причесать логер
 	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore)
-
 	go func() { startTicker(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
 
-	r := chi.NewRouter()
-
-	r.Use(func(h http.Handler) http.Handler {
-		return middleware.LoggingMiddleware(h)
-	})
-	r.Use(func(h http.Handler) http.Handler {
-		return middleware.GzipMiddleware(h)
-	})
-	r.Use(func(h http.Handler) http.Handler {
-		return middleware.UnGzipMiddleware(h)
-	})
-
-	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", handlers.PostAddValue)
-
-	r.Post("/value/", handlers.JSONValue)
-	r.Post("/update/", handlers.JSONUpdate)
-
-	r.Get("/value/{typeMetric}/{nameMetric}", handlers.GetReceivingMetric)
-	r.Get("/", handlers.GetReceivingAllMetric)
+	r := setapRouter()
 
 	sugar.Log(logger.Log.Level(), "Открыт сервер ", *config.FlagAddressAndPort)
-	err := http.ListenAndServe(*config.FlagAddressAndPort, r)
-	if err != nil {
-		panic(err)
-	}
+	startServer(r)
 }
 
 func initializeStorage(cdFile string, resMetricBool bool) {
@@ -76,5 +44,35 @@ func startTicker(cdFile string, storeInterval int64) {
 
 	for range ticker1.C {
 		metricStorage.SaveMetricToFile(cdFile)
+	}
+}
+
+func setapRouter() *chi.Mux {
+	r := chi.NewRouter()
+	r.Use(func(h http.Handler) http.Handler {
+		return middleware.LoggingMiddleware(h)
+	})
+	r.Use(func(h http.Handler) http.Handler {
+		return middleware.GzipMiddleware(h)
+	})
+	r.Use(func(h http.Handler) http.Handler {
+		return middleware.UnGzipMiddleware(h)
+	})
+
+	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", handlers.PostAddValue) //Обновление по URL
+
+	r.Post("/value/", handlers.JSONValue)   //Обновлени через JSON
+	r.Post("/update/", handlers.JSONUpdate) //Обновлени через JSON
+
+	r.Get("/value/{typeMetric}/{nameMetric}", handlers.GetReceivingMetric) //Получение по URL
+	r.Get("/", handlers.GetReceivingAllMetric)                             //Получение по JSON
+	return r
+}
+
+func startServer(r *chi.Mux) {
+
+	err := http.ListenAndServe(*config.FlagAddressAndPort, r)
+	if err != nil {
+		panic(err)
 	}
 }

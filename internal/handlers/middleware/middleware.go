@@ -9,6 +9,25 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 )
 
+type (
+	gzipWriter struct {
+		http.ResponseWriter
+		Writer io.Writer
+	}
+
+	// берём структуру для хранения сведений об ответе
+	responseData struct {
+		status int
+		uri    string
+	}
+
+	// добавляем реализацию http.ResponseWriter
+	loggingResponseWriter struct {
+		http.ResponseWriter // встраиваем оригинальный http.ResponseWriter
+		responseData        *responseData
+	}
+)
+
 func GzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Encoding") == "gzip" {
@@ -23,11 +42,6 @@ func GzipMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-type gzipWriter struct {
-	http.ResponseWriter
-	Writer io.Writer
 }
 
 func (w gzipWriter) Write(b []byte) (int, error) {
@@ -52,20 +66,6 @@ func UnGzipMiddleware(next http.Handler) http.Handler {
 
 	})
 }
-
-type (
-	// берём структуру для хранения сведений об ответе
-	responseData struct {
-		status int
-		uri    string
-	}
-
-	// добавляем реализацию http.ResponseWriter
-	loggingResponseWriter struct {
-		http.ResponseWriter // встраиваем оригинальный http.ResponseWriter
-		responseData        *responseData
-	}
-)
 
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)

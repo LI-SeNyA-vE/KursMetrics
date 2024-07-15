@@ -10,16 +10,13 @@ import (
 )
 
 func main() {
-	cfg := config.GetConfig()
-	config.InitializeGlobals(cfg)
-
 	gaugeMetrics, counterMetrics := funcAgent.UpdateMetric()
 
 	ticker1 := time.NewTicker(time.Duration(*config.FlagPollInterval) * time.Second)
 	ticker2 := time.NewTicker(time.Duration(*config.FlagRreportInterval) * time.Second)
 	defer ticker1.Stop()
 	defer ticker2.Stop()
-	for {
+	go func() {
 		select {
 		case <-ticker1.C:
 			gaugeMetrics, counterMetrics = funcAgent.UpdateMetric()
@@ -29,6 +26,5 @@ func main() {
 			funcAgent.SendJSONMetricsCounter(counterMetrics)
 			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.FlagRreportInterval)
 		}
-
-	}
+	}()
 }

@@ -7,16 +7,10 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	config "github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-resty/resty/v2"
 )
-
-type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
 
 func gzipCompress(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
@@ -37,7 +31,7 @@ func SendJSONMetricsGauge(mapMetric map[string]float64) {
 	url := fmt.Sprintf("http://%s/update/", *config.FlagAddressAndPort)
 
 	for nameMetric, value := range mapMetric {
-		metrics := Metrics{
+		metrics := metricStorage.Metrics{
 			ID:    nameMetric,
 			MType: "gauge",
 			Value: &value,
@@ -73,7 +67,7 @@ func SendJSONMetricsCounter(mapMetric map[string]int64) {
 	url := fmt.Sprintf("http://%s/update/", *config.FlagAddressAndPort)
 
 	for nameMetric, value := range mapMetric {
-		metrics := Metrics{
+		metrics := metricStorage.Metrics{
 			ID:    nameMetric,
 			MType: "counter",
 			Delta: &value,

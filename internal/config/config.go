@@ -27,18 +27,15 @@ type Config struct {
 	EnvRestore         bool   `env:"RESTORE"`
 }
 
-func GetConfig() Config {
+// InitializeGlobals инициализирует флаги на основе значений из конфигурации
+func InitializeGlobals() {
 	flag.Parse()
 	var cfg Config
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return cfg
-}
 
-// InitializeGlobals инициализирует флаги на основе значений из конфигурации
-func InitializeGlobals(cfg Config) {
 	checkForNil(cfg.EnvAddress, FlagAddressAndPort)
 	checkForNil(cfg.EnvReportInterval, FlagRreportInterval)
 	checkForNil(cfg.EnvPollInterval, FlagPollInterval)
