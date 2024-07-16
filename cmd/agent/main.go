@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+	config.InitializeGlobals()
 	gaugeMetrics, counterMetrics := funcAgent.UpdateMetric()
 
 	ticker1 := time.NewTicker(time.Duration(*config.FlagPollInterval) * time.Second)
