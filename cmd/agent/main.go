@@ -17,14 +17,16 @@ func main() {
 	defer ticker1.Stop()
 	defer ticker2.Stop()
 	go func() {
-		select {
-		case <-ticker1.C:
-			gaugeMetrics, counterMetrics = funcAgent.UpdateMetric()
-			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *config.FlagPollInterval)
-		case <-ticker2.C:
-			funcAgent.SendJSONMetricsGauge(gaugeMetrics)
-			funcAgent.SendJSONMetricsCounter(counterMetrics)
-			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.FlagRreportInterval)
+		for {
+			select {
+			case <-ticker1.C:
+				gaugeMetrics, counterMetrics = funcAgent.UpdateMetric()
+				fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *config.FlagPollInterval)
+			case <-ticker2.C:
+				funcAgent.SendJSONMetricsGauge(gaugeMetrics)
+				funcAgent.SendJSONMetricsCounter(counterMetrics)
+				fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.FlagRreportInterval)
+			}
 		}
 	}()
 	select {}
