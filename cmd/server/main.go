@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	config "github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	config.InitializeGlobals()
 	if err := logger.Initialize("debug"); err != nil {
 		panic(err)
 	}
