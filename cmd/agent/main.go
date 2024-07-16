@@ -27,4 +27,5 @@ func main() {
 			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.FlagRreportInterval)
 		}
 	}()
+	select {}
 }
