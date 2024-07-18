@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
 	"io"
 	"net/http"
 	"strconv"
@@ -12,13 +11,6 @@ import (
 	storageMetric "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
 )
-
-type Metrics struct {
-	ID    string   `json:"id"`              // имя метрики
-	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
-}
 
 func PostAddValue(w http.ResponseWriter, r *http.Request) {
 	typeMetric := chi.URLParam(r, "typeMetric")
@@ -31,7 +23,7 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Это не Float", http.StatusBadRequest) //Вывод error-ки
 			return                                               //
 		}
-		storageMetric.Metric.UpdateGauge(nameMetric, count)
+		storageMetric.StorageMetric.UpdateGauge(nameMetric, count)
 	case "counter": //Если передано значение 'counter'
 		{
 			count, err := strconv.ParseInt(countMetric, 10, 64) //Проверка что переданно число и его можно перевети в int64
@@ -39,7 +31,7 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Это не Float", http.StatusBadRequest) //Вывод error-ки
 				return                                               //
 			}
-			storageMetric.Metric.UpdateCounter(nameMetric, count)
+			storageMetric.StorageMetric.UpdateCounter(nameMetric, count)
 		}
 	default: //Если передано другое значение значение
 		{
@@ -54,7 +46,7 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	nameMetric := chi.URLParam(r, "nameMetric")
 	typeMetric := chi.URLParam(r, "typeMetric")
-	value, err := storageMetric.Metric.GetValue(typeMetric, nameMetric)
+	value, err := storageMetric.StorageMetric.GetValue(typeMetric, nameMetric)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -64,7 +56,7 @@ func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
+/* func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 	gauges := storageMetric.Metric.GetAllGauges()
 	counters := storageMetric.Metric.GetAllCounters()
 
@@ -73,27 +65,63 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 		Counter: counters,
 	}
 
-	tmplPath := "../../internal/templates/index.html"
+	tmplPath := filepath.Join("..", "..", "internal", "templates", "index.html")
 
 	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
+		logger.Log.Info("Ошибка 1 " + err.Error())
 		http.Error(w, fmt.Sprintf("Error parsing template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	err = tmpl.Execute(w, data)
 	if err != nil {
+		logger.Log.Info("Ошибка 2 " + err.Error())
 		http.Error(w, fmt.Sprintf("Error executing template: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
+} */
+
+func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
+	body := `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>All tuples</title>
+            </head>
+            <body>
+            <table>
+                <tr>
+                    <td>Metric</td>
+                    <td>Value</td>
+                </tr>
+    `
+	listC := storageMetric.StorageMetric.GetAllCounters()
+	for k, v := range listC {
+		body = body + fmt.Sprintf("<tr>\n<td>%s</td>\n", k)
+		body = body + fmt.Sprintf("<td>%v</td>\n</tr>\n", v)
+	}
+
+	listG := storageMetric.StorageMetric.GetAllGauges()
+	for k, v := range listG {
+		body = body + fmt.Sprintf("<tr>\n<td>%s</td>\n", k)
+		body = body + fmt.Sprintf("<td>%v</td>\n</tr>\n", v)
+	}
+
+	body = body + " </table>\n </body>\n</html>"
+
+	// respond to agent
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(body))
 }
 
 func JSONValue(w http.ResponseWriter, r *http.Request) {
-	var metrics Metrics
 	var buf bytes.Buffer
+	var metrics storageMetric.Metrics
 
 	_, err := buf.ReadFrom(r.Body)
 	if err != nil {
@@ -107,7 +135,7 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metric, err := storageMetric.Metric.GetValue(metrics.MType, metrics.ID)
+	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID)
 	if err != nil {
 		http.Error(w, "не найдено", http.StatusNotFound)
 		return
@@ -134,7 +162,7 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 }
 
 func JSONUpdate(w http.ResponseWriter, r *http.Request) {
-	var metrics Metrics
+	var metrics storageMetric.Metrics
 	var buf bytes.Buffer
 
 	_, err := buf.ReadFrom(r.Body)
@@ -151,12 +179,12 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 
 	switch metrics.MType {
 	case "counter":
-		storageMetric.Metric.UpdateCounter(metrics.ID, *metrics.Delta)
+		storageMetric.StorageMetric.UpdateCounter(metrics.ID, *metrics.Delta)
 	case "gauge":
-		storageMetric.Metric.UpdateGauge(metrics.ID, *metrics.Value)
+		storageMetric.StorageMetric.UpdateGauge(metrics.ID, *metrics.Value)
 	}
 
-	metric, err := storageMetric.Metric.GetValue(metrics.MType, metrics.ID)
+	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID)
 	if err != nil {
 		http.Error(w, "не найдено", http.StatusNotFound)
 		return

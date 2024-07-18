@@ -4,7 +4,15 @@ import (
 	"fmt"
 )
 
-var Metric = NewMetricStorage()
+var StorageMetric = NewMetricStorage()
+
+// Структура метрики для отправки JSON
+type Metrics struct {
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+}
 
 // Структура для хранения метрик в памяти
 type MetricStorage struct {
@@ -50,12 +58,4 @@ func (m *MetricStorage) GetValue(typeMetric string, nameMetric string) (interfac
 		}
 	}
 	return nil, fmt.Errorf("нет метрики:%s, типа:%s", nameMetric, typeMetric)
-
-	/* if v, ok := m.Gauge[nameMetric]; ok {
-		return v, nil
-	}
-	if v, ok := m.Counter[nameMetric]; ok {
-		return v, nil
-	}
-	return nil, fmt.Errorf("нет метрики:%s, типа:%s", nameMetric, typeMetric) */
 }
