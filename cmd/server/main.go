@@ -17,7 +17,6 @@ func main() {
 	if err := logger.Initialize("debug"); err != nil {
 		panic(err)
 	}
-	defer logger.Log.Sync()
 
 	sugar := *logger.Log.Sugar()
 	//Причесать логер
@@ -71,7 +70,6 @@ func setapRouter() *chi.Mux {
 }
 
 func startServer(r *chi.Mux) {
-
 	err := http.ListenAndServe(*config.FlagAddressAndPort, r)
 	if err != nil {
 		panic(err)
