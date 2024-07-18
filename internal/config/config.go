@@ -17,7 +17,7 @@ var (
 	FlagRestore         = flag.Bool("b", true, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
 )
 
-type Config struct {
+type VarEnv struct {
 	EnvAddress         string `env:"ADDRESS"`
 	EnvReportInterval  int64  `env:"REPORT_INTERVAL"`
 	EnvPollInterval    int64  `env:"POLL_INTERVAL"`
@@ -30,7 +30,7 @@ type Config struct {
 // InitializeGlobals инициализирует флаги на основе значений из конфигурации
 func InitializeGlobals() {
 	flag.Parse()
-	var cfg Config
+	var cfg VarEnv
 	err := env.Parse(&cfg)
 	if err != nil {
 		log.Fatal(err)
