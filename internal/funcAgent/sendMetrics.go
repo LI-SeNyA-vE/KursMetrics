@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"log"
 
-	config "github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-resty/resty/v2"
 )

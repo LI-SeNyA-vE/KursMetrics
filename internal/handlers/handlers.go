@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -208,4 +209,18 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write(resp)
+}
+
+func Ping(w http.ResponseWriter, r *http.Request) {
+	ps := fmt.Sprintf("host=%s user=%s password=%s sslmode=disable",
+		`localhost`, `Senya`, `1q2w3e4r5t`)
+
+	db, err := sql.Open("pgx", ps)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	defer db.Close()
+
+	w.WriteHeader(http.StatusOK)
 }

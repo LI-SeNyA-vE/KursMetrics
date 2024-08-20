@@ -1,15 +1,15 @@
 package main
 
 import (
-	"net/http"
-	"time"
-
 	config "github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
+	_ "github.com/jackc/pgx/v5/stdlib"
+	"net/http"
+	"time"
 )
 
 func main() {
@@ -20,6 +20,7 @@ func main() {
 
 	sugar := *logger.Log.Sugar()
 	//Причесать логер
+
 	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore)
 	go func() { startTicker(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
 
@@ -65,7 +66,9 @@ func setapRouter() *chi.Mux {
 	r.Post("/update/", handlers.JSONUpdate) //Обновлени через JSON
 
 	r.Get("/value/{typeMetric}/{nameMetric}", handlers.GetReceivingMetric) //Получение по URL
+	r.Get("/ping", handlers.GetReceivingAllMetric)                         //Проверка подключения к БД
 	r.Get("/", handlers.GetReceivingAllMetric)                             //Получение по JSON
+	r.Get("/ping", handlers.Ping)
 	return r
 }
 
