@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"io"
 	"net/http"
 	"strconv"
@@ -212,15 +213,18 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 func Ping(w http.ResponseWriter, r *http.Request) {
-	ps := fmt.Sprintf("host=%s user=%s password=%s sslmode=disable",
-		`localhost`, `Senya`, `1q2w3e4r5t`)
 
-	db, err := sql.Open("pgx", ps)
+	db, err := sql.Open("pgx", *config.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 }

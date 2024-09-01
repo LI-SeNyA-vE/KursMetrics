@@ -21,7 +21,15 @@ func main() {
 	sugar := *logger.Log.Sugar()
 	//Причесать логер
 
-	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore)
+	if *config.FlagDatabaseDsn != "" {
+		db, err := config.ConnectDB()
+		if err != nil {
+			sugar.Log(logger.Log.Level(), "Ошибка связанная с ДБ ", err)
+		}
+		metricStorage.CrereateDB(db, *config.FlagDatabaseDsn)
+	}
+
+	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore, *config.FlagDatabaseDsn)
 	go func() { startTicker(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
 
 	r := setapRouter()
@@ -30,10 +38,14 @@ func main() {
 	startServer(r)
 }
 
-func initializeStorage(cdFile string, resMetricBool bool) {
+func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
+	if loadDataBase != "" {
+
+	}
 	if resMetricBool {
 		metricStorage.LoadMetricFromFile(cdFile)
 	}
+
 }
 
 func startTicker(cdFile string, storeInterval int64) {
