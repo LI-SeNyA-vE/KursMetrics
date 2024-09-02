@@ -38,7 +38,7 @@ type ConnectSQL struct {
 	tableName string
 }
 
-func ConfigSQL() (ConnectSQL, string) {
+func configSQL() (ConnectSQL, string) {
 	var createTableSQL = `
   CREATE TABLE IF NOT EXISTS metric (
       "Id" TEXT NOT NULL,

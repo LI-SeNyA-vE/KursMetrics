@@ -26,8 +26,7 @@ func main() {
 		if err != nil {
 			sugar.Log(logger.Log.Level(), "Ошибка связанная с ДБ ", err)
 		}
-		_, configCreateSQL := config.ConfigSQL()
-		metricStorage.CrereateDB(db, configCreateSQL)
+		metricStorage.CrereateDB(db, *config.FlagDatabaseDsn)
 	}
 
 	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore, *config.FlagDatabaseDsn)
