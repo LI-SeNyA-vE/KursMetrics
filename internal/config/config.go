@@ -3,7 +3,6 @@ package config
 import (
 	"database/sql"
 	"flag"
-	"fmt"
 	"log"
 
 	"github.com/caarlos0/env/v6"
@@ -63,7 +62,6 @@ func ConnectDB() (*sql.DB, error) {
 	db, err := sql.Open("postgres", *FlagDatabaseDsn)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к базе данных: %v", err)
-		fmt.Printf("Ссылка на подключение: %s", *FlagDatabaseDsn)
 		return db, err
 	}
 
