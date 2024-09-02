@@ -17,7 +17,7 @@ var (
 	FlagStoreInterval   = flag.Int64("i", 0, "интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
 	FlagFileStoragePath = flag.String("f", "/tmp/metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
 	FlagRestore         = flag.Bool("b", true, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
-	FlagDatabaseDsn     = flag.String("d", "host=localhost user=Senya password=1q2w3e4r5t sslmode=disable", "Определяет загружать ранее сохранённые значения из базы при старте сервера")
+	FlagDatabaseDsn     = flag.String("d", "host=localhost user=Senya password=1q2w3e4r5t dbname=postgres sslmode=disable", "Определяет загружать ранее сохранённые значения из базы при старте сервера")
 )
 
 type VarEnv struct {
@@ -60,7 +60,7 @@ func ConnectDB() (*sql.DB, error) {
 	//cs, _ := configSQL()
 	//connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", cs.user, cs.password, cs.dbname, cs.sslmode)
 
-	db, err := sql.Open("postgres", *FlagDatabaseDsn)
+	db, err := sql.Open("pgx", *FlagDatabaseDsn)
 	if err != nil {
 		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 		fmt.Printf("Ссылка на подключение: %s", *FlagDatabaseDsn)
