@@ -62,14 +62,14 @@ func ConnectDB() (*sql.DB, error) {
 
 	db, err := sql.Open("pgx", *FlagDatabaseDsn)
 	if err != nil {
-		log.Fatalf("Ошибка подключения к базе данных: %v", err)
+		log.Println("Ошибка подключения к базе данных: %v", err)
 		fmt.Printf("Ссылка на подключение: %s", *FlagDatabaseDsn)
 		return db, err
 	}
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatalf("Не удалось установить соединение с базой данных: %v", err)
+		log.Println("Не удалось установить соединение с базой данных: %v", err)
 		return db, err
 	}
 
@@ -82,7 +82,7 @@ func InitializeGlobals() {
 	var cfg VarEnv
 	err := env.Parse(&cfg)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	checkForNil(cfg.EnvAddress, FlagAddressAndPort)
