@@ -214,7 +214,7 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 
 func Ping(w http.ResponseWriter, r *http.Request) {
 
-	db, err := sql.Open("postgres", *config.FlagDatabaseDsn)
+	db, err := sql.Open("pgx", *config.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
