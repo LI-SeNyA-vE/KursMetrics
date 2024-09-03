@@ -39,21 +39,14 @@ type ConnectSQL struct {
 	tableName string
 }
 
-func ConfigSQL() (ConnectSQL, string) {
+func ConfigSQL() string {
 	var createTableSQL = `
   CREATE TABLE IF NOT EXISTS metric (
       "Id" TEXT NOT NULL,
       "Type" TEXT NOT NULL,
       "Value" DOUBLE PRECISION NULL
   );`
-	configConnect := ConnectSQL{
-		user:      "Senya",
-		password:  "1q2w3e4r5t",
-		dbname:    "postgres",
-		sslmode:   "disable",
-		tableName: "metric",
-	}
-	return configConnect, createTableSQL
+	return createTableSQL
 }
 
 func ConnectDB() (*sql.DB, error) {
