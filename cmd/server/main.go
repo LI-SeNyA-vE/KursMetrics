@@ -44,7 +44,8 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 
 		rows, err := db.Query("SELECT Id, Type, Name, Value FROM your_table_name")
 		if err != nil {
-			log.Fatalf("Ошибка выполнения запроса к базе данных: %v", err)
+			log.Println("Ошибка получения данных из базы данных: %v", err)
+			return
 		}
 		defer rows.Close()
 
