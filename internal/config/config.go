@@ -56,7 +56,7 @@ func ConnectDB() (*sql.DB, error) {
 
 	db, err := sql.Open("pgx", *FlagDatabaseDsn)
 	if err != nil {
-		log.Println("Ошибка подключения к базе данных: %v", err)
+		log.Printf("Ошибка подключения к базе данных: %v", err)
 		fmt.Printf("Ссылка на подключение: %s", *FlagDatabaseDsn)
 		return db, err
 	}
@@ -64,7 +64,7 @@ func ConnectDB() (*sql.DB, error) {
 
 	err = db.Ping()
 	if err != nil {
-		log.Println("Не удалось установить соединение с базой данных: %v", err)
+		log.Printf("Не удалось установить соединение с базой данных: %v", err)
 		return db, err
 	}
 
