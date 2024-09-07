@@ -7,6 +7,7 @@ import (
 )
 
 func LoadMetricFromFile(fstg string) {
+
 	res, err := os.ReadFile(fstg)
 	if err != nil {
 		log.Printf("Ошибка чтения файла: %s", err)

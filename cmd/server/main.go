@@ -8,6 +8,7 @@ import (
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"log"
 	"net/http"
 	"time"
 )
@@ -21,15 +22,6 @@ func main() {
 	sugar := *logger.Log.Sugar()
 	//Причесать логер
 
-	if *config.FlagDatabaseDsn != "" {
-		db, err := config.ConnectDB()
-		if err != nil {
-			sugar.Log(logger.Log.Level(), "Ошибка связанная с ДБ ", err)
-		}
-		configCreateSQL := config.ConfigSQL()
-		metricStorage.CrereateDB(db, configCreateSQL)
-	}
-
 	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore, *config.FlagDatabaseDsn)
 	go func() { startTicker(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
 
@@ -41,12 +33,52 @@ func main() {
 
 func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 	if loadDataBase != "" {
+		db, err := config.ConnectDB()
+		if err != nil {
+			log.Printf("Ошибка связанная с ДБ ", err)
+		}
+		defer db.Close()
 
+		configCreateSQL := config.ConfigSQL()
+		metricStorage.CrereateDB(db, configCreateSQL)
+
+		rows, err := db.Query("SELECT Id, Type, Name, Value FROM your_table_name")
+		if err != nil {
+			log.Fatalf("Ошибка выполнения запроса к базе данных: %v", err)
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			metric := &metricStorage.MetricStorage{}
+			var idMetric string
+			var typeMetric string
+			var nameMetric string
+			var valueMetric float64
+			//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
+			err := rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
+			if err != nil {
+				log.Fatalf("Ошибка сканирования строки: %v", err)
+			}
+
+			switch typeMetric { //Свитч для проверки что это запрос или gauge или counter
+			case "gauge": //Если передано значение 'gauge'
+				metric.UpdateGauge(nameMetric, valueMetric)
+			case "counter": //Если передано значение 'counter'
+				metric.UpdateCounter(nameMetric, int64(valueMetric))
+			default: //Если передано другое значение значение
+				log.Println("При вытягивание данных из БД оказалось что тип не gauge и не counter")
+			}
+		}
+
+		// Проверка на ошибки, которые могли произойти при итерировании по строкам
+		if err = rows.Err(); err != nil {
+			log.Fatalf("Ошибка при итерировании по строкам: %v", err)
+		}
 	}
 	if resMetricBool {
 		metricStorage.LoadMetricFromFile(cdFile)
 	}
-
+	return
 }
 
 func startTicker(cdFile string, storeInterval int64) {
