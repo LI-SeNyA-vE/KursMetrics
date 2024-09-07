@@ -51,9 +51,6 @@ func ConfigSQL() string {
 }
 
 func ConnectDB() (*sql.DB, error) {
-	//cs, _ := configSQL()
-	//connStr := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", cs.user, cs.password, cs.dbname, cs.sslmode)
-
 	db, err := sql.Open("pgx", *FlagDatabaseDsn)
 	if err != nil {
 		log.Printf("Ошибка подключения к базе данных: %v", err)
