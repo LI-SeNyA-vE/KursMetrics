@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
 	"io"
 	"net/http"
 	"strconv"
@@ -139,6 +140,7 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 
 	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID)
 	if err != nil {
+		logger.Log.Info(err)
 		http.Error(w, "не найдено", http.StatusNotFound)
 		return
 	}

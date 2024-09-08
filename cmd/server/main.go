@@ -36,7 +36,6 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 		db, err := config.ConnectDB()
 		if err != nil {
 			log.Printf("Ошибка связанная с ДБ: %v", err)
-			return
 		}
 		defer db.Close()
 
@@ -46,36 +45,35 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 		rows, err := db.Query("SELECT Id, Type, Name, Value FROM your_table_name")
 		if err != nil {
 			log.Printf("Ошибка получения данных из базы данных: %v", err)
-			return
+		} else {
+			for rows.Next() {
+				metric := &metricStorage.MetricStorage{}
+				var idMetric string
+				var typeMetric string
+				var nameMetric string
+				var valueMetric float64
+				//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
+				err := rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
+				if err != nil {
+					log.Fatalf("Ошибка сканирования строки: %v", err)
+				}
+
+				switch typeMetric { //Свитч для проверки что это запрос или gauge или counter
+				case "gauge": //Если передано значение 'gauge'
+					metric.UpdateGauge(nameMetric, valueMetric)
+				case "counter": //Если передано значение 'counter'
+					metric.UpdateCounter(nameMetric, int64(valueMetric))
+				default: //Если передано другое значение значение
+					log.Println("При вытягивание данных из БД оказалось что тип не gauge и не counter")
+				}
+			}
 		}
 		defer rows.Close()
 
-		for rows.Next() {
-			metric := &metricStorage.MetricStorage{}
-			var idMetric string
-			var typeMetric string
-			var nameMetric string
-			var valueMetric float64
-			//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
-			err := rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
-			if err != nil {
-				log.Fatalf("Ошибка сканирования строки: %v", err)
-			}
-
-			switch typeMetric { //Свитч для проверки что это запрос или gauge или counter
-			case "gauge": //Если передано значение 'gauge'
-				metric.UpdateGauge(nameMetric, valueMetric)
-			case "counter": //Если передано значение 'counter'
-				metric.UpdateCounter(nameMetric, int64(valueMetric))
-			default: //Если передано другое значение значение
-				log.Println("При вытягивание данных из БД оказалось что тип не gauge и не counter")
-			}
-		}
-
-		// Проверка на ошибки, которые могли произойти при итерировании по строкам
-		if err = rows.Err(); err != nil {
-			log.Fatalf("Ошибка при итерировании по строкам: %v", err)
-		}
+		//// Проверка на ошибки, которые могли произойти при итерировании по строкам
+		//if err = rows.Err(); err != nil {
+		//	log.Fatalf("Ошибка при итерировании по строкам: %v", err)
+		//}
 	}
 	if resMetricBool {
 		metricStorage.LoadMetricFromFile(cdFile)
