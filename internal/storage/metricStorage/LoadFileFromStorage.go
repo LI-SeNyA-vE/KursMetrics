@@ -2,7 +2,7 @@ package storage
 
 import (
 	"encoding/json"
-	"log"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
 	"os"
 )
 
@@ -10,10 +10,10 @@ func LoadMetricFromFile(fstg string) {
 
 	res, err := os.ReadFile(fstg)
 	if err != nil {
-		log.Printf("Ошибка чтения файла: %s", err)
+		logger.Log.Info("Ошибка чтения файла: %s", err)
 	}
 
 	if err := json.Unmarshal(res, &StorageMetric); err != nil {
-		log.Printf("Ошибка Unmarshal: %s", err)
+		logger.Log.Info("Ошибка Unmarshal: %s", err)
 	}
 }
