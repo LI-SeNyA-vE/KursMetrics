@@ -36,6 +36,7 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 		db, err := config.ConnectDB()
 		if err != nil {
 			log.Printf("Ошибка связанная с ДБ: %v", err)
+			return
 		}
 		defer db.Close()
 
