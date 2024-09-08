@@ -35,7 +35,7 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 	if loadDataBase != "" {
 		db, err := config.ConnectDB()
 		if err != nil {
-			log.Printf("Ошибка связанная с ДБ: %v", err)
+			logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
 		}
 		defer db.Close()
 
@@ -44,7 +44,7 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 
 		rows, err := db.Query("SELECT Id, Type, Name, Value FROM your_table_name")
 		if err != nil {
-			log.Printf("Ошибка получения данных из базы данных: %v", err)
+			logger.Log.Infoln("Ошибка получения данных из базы данных: %v", err)
 		} else {
 			for rows.Next() {
 				metric := &metricStorage.MetricStorage{}
@@ -55,7 +55,7 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 				//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
 				err := rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
 				if err != nil {
-					log.Fatalf("Ошибка сканирования строки: %v", err)
+					logger.Log.Infoln("Ошибка сканирования строки: %v", err)
 				}
 				defer rows.Close()
 
@@ -68,6 +68,7 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 					log.Println("При вытягивание данных из БД оказалось что тип не gauge и не counter")
 				}
 			}
+			return
 		}
 
 		//// Проверка на ошибки, которые могли произойти при итерировании по строкам
