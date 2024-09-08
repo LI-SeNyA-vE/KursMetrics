@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-var Log *zap.Logger
+var Log *zap.SugaredLogger
 
 func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 	enc.AppendString(t.Format("2006-01-02 15:04:05"))
@@ -35,10 +35,10 @@ func getCustomLoggerConfig(level string) (*zap.Logger, error) {
 }
 
 func Initialize(level string) error {
-	var err error
-	Log, err = getCustomLoggerConfig(level)
+	logger, err := getCustomLoggerConfig(level)
 	if err != nil {
 		return err
 	}
+	Log = logger.Sugar() // Преобразуем в SugaredLogger для удобства
 	return nil
 }

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
 )
 
 type (
@@ -87,7 +87,7 @@ func LoggingMiddleware(h http.Handler) http.Handler {
 		h.ServeHTTP(&lw, r)           // обслуживание оригинального запроса
 		duration := time.Since(start) // Since возвращает разницу во времени между start
 
-		logger.Log.Sugar().Infoln(
+		logger.Log.Infoln(
 			"uri:", r.RequestURI,
 			"method:", r.Method,
 			"status:", responseData.status, // получаем перехваченный код статуса ответа

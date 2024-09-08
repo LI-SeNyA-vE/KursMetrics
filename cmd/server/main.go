@@ -4,7 +4,7 @@ import (
 	config "github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -18,16 +18,16 @@ func main() {
 	if err := logger.Initialize("debug"); err != nil {
 		panic(err)
 	}
-
-	sugar := *logger.Log.Sugar()
-	//Причесать логер
-
+	err := logger.Initialize("info")
+	if err != nil {
+		panic("Не удалось инициализировать логгер")
+	}
 	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore, *config.FlagDatabaseDsn)
 	go func() { startTicker(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
 
 	r := setapRouter()
 
-	sugar.Log(logger.Log.Level(), "Открыт сервер ", *config.FlagAddressAndPort)
+	logger.Log.Info(logger.Log.Level(), "Открыт сервер ", *config.FlagAddressAndPort)
 	startServer(r)
 }
 
