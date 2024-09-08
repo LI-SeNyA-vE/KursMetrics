@@ -53,9 +53,10 @@ func ConfigSQL() string {
 
 func ConnectDB() (*sql.DB, error) {
 	db, err := sql.Open("pgx", *FlagDatabaseDsn)
+	logger.Log.Infoln("Ссылка на подключение: %s", *FlagDatabaseDsn)
 	if err != nil {
 		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
-		logger.Log.Infoln("Ссылка на подключение: %s", *FlagDatabaseDsn)
+
 		return db, err
 	}
 	defer db.Close()

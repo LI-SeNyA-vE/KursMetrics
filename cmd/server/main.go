@@ -15,9 +15,6 @@ import (
 
 func main() {
 	config.InitializeGlobals()
-	if err := logger.Initialize("debug"); err != nil {
-		panic(err)
-	}
 	err := logger.Initialize("info")
 	if err != nil {
 		panic("Не удалось инициализировать логгер")
