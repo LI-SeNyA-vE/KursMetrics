@@ -57,6 +57,7 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 				if err != nil {
 					log.Fatalf("Ошибка сканирования строки: %v", err)
 				}
+				defer rows.Close()
 
 				switch typeMetric { //Свитч для проверки что это запрос или gauge или counter
 				case "gauge": //Если передано значение 'gauge'
@@ -68,7 +69,6 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 				}
 			}
 		}
-		defer rows.Close()
 
 		//// Проверка на ошибки, которые могли произойти при итерировании по строкам
 		//if err = rows.Err(); err != nil {
