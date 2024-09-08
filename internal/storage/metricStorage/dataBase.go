@@ -2,14 +2,15 @@ package storage
 
 import (
 	"database/sql"
-	"fmt"
-	"log"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
 )
 
 func CrereateDB(db *sql.DB, createTableSQL string) {
 	_, err := db.Exec(createTableSQL)
 	if err != nil {
-		log.Printf("Ошибка при создании таблицы: %v", err)
+		logger.Log.Infoln("Ошибка при создании таблицы: %v", err)
+
+		return
 	}
-	fmt.Println("Таблица 'Metric' успешно создана или уже была.")
+	logger.Log.Info("Таблица 'Metric' успешно создана или уже была.")
 }
