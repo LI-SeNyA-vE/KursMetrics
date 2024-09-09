@@ -8,7 +8,7 @@ import (
 func CrereateDB(db *sql.DB, createTableSQL string) {
 	_, err := db.Exec(createTableSQL)
 	if err != nil {
-		logger.Log.Infoln("Ошибка при создании таблицы: %v", err)
+		logger.Log.Infof("Ошибка при создании таблицы: %v", err)
 
 		return
 	}
