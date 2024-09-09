@@ -59,7 +59,6 @@ func ConnectDB() (*sql.DB, error) {
 
 		return db, err
 	}
-	defer db.Close()
 
 	err = db.Ping()
 	if err != nil {
