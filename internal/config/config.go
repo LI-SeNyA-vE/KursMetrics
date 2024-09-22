@@ -15,7 +15,7 @@ var (
 	FlagRreportInterval = flag.Int64("r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
 	FlagPollInterval    = flag.Int64("p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
 	FlagLogLevel        = flag.String("l", "info", "Уровень логирования")
-	FlagStoreInterval   = flag.Int64("i", 300, "интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
+	FlagStoreInterval   = flag.Int64("i", 30, "интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
 	FlagFileStoragePath = flag.String("f", "/tmp/metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
 	FlagRestore         = flag.Bool("b", true, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
 	FlagDatabaseDsn     = flag.String("d", "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable", "Определяет загружать ранее сохранённые значения из базы при старте сервера")
@@ -44,9 +44,10 @@ type ConnectSQL struct {
 func ConfigSQL() string {
 	var createTableSQL = `
   CREATE TABLE IF NOT EXISTS metric (
-      "Id" TEXT NOT NULL,
-      "Type" TEXT NOT NULL,
-      "Value" DOUBLE PRECISION NULL
+      "id" TEXT NOT NULL,
+      "type" TEXT NOT NULL,
+      "value" DOUBLE PRECISION NULL,
+      PRIMARY KEY ("id", "type")
   );`
 	return createTableSQL
 }
@@ -56,7 +57,6 @@ func ConnectDB() (*sql.DB, error) {
 	logger.Log.Infoln("Ссылка на подключение: %s", *FlagDatabaseDsn)
 	if err != nil {
 		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
-
 		return db, err
 	}
 

@@ -20,6 +20,7 @@ func main() {
 		panic("Не удалось инициализировать логгер")
 	}
 	initializeStorage(*config.FlagFileStoragePath, *config.FlagRestore, *config.FlagDatabaseDsn)
+
 	go func() { startTicker(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
 
 	r := setapRouter()
@@ -39,7 +40,7 @@ func initializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 		configCreateSQL := config.ConfigSQL()
 		metricStorage.CrereateDB(db, configCreateSQL)
 
-		rows, err := db.Query("SELECT Id, Type, Name, Value FROM your_table_name")
+		rows, err := db.Query("SELECT Id, Type, Name, Value FROM metric")
 		if err != nil {
 			logger.Log.Infoln("Ошибка получения данных из базы данных: %v", err)
 		} else {
@@ -88,6 +89,7 @@ func startTicker(cdFile string, storeInterval int64) {
 
 	for range ticker1.C {
 		metricStorage.SaveMetricToFile(cdFile)
+		metricStorage.SaveInDatabase()
 	}
 }
 
