@@ -5,25 +5,30 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"log"
-
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-resty/resty/v2"
+	"log"
+	"time"
 )
 
-func gzipCompress(data []byte) ([]byte, error) {
-	var buf bytes.Buffer
-	writer := gzip.NewWriter(&buf)
-	_, err := writer.Write(data)
-	if err != nil {
-		return nil, fmt.Errorf("ошибка записи данных в gzip writer: %w", err)
+func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]int64) {
+	ticker1 := time.NewTicker(time.Duration(*config.FlagPollInterval) * time.Second)
+	ticker2 := time.NewTicker(time.Duration(*config.FlagRreportInterval) * time.Second)
+	defer ticker1.Stop()
+	defer ticker2.Stop()
+
+	for {
+		select {
+		case <-ticker1.C:
+			gaugeMetrics, counterMetrics = UpdateMetric()
+			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", *config.FlagPollInterval)
+		case <-ticker2.C:
+			SendJSONMetricsGauge(gaugeMetrics)
+			SendJSONMetricsCounter(counterMetrics)
+			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", *config.FlagRreportInterval)
+		}
 	}
-	err = writer.Close()
-	if err != nil {
-		return nil, fmt.Errorf("ошибка закрытия gzip writer: %w", err)
-	}
-	return buf.Bytes(), nil
 }
 
 func SendJSONMetricsGauge(mapMetric map[string]float64) {
@@ -95,4 +100,18 @@ func SendJSONMetricsCounter(mapMetric map[string]int64) {
 			log.Printf("Не удалось отправить метрику %s типа %s с ошибкой: %v", metrics.ID, metrics.MType, err)
 		}
 	}
+}
+
+func gzipCompress(data []byte) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := gzip.NewWriter(&buf)
+	_, err := writer.Write(data)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка записи данных в gzip writer: %w", err)
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, fmt.Errorf("ошибка закрытия gzip writer: %w", err)
+	}
+	return buf.Bytes(), nil
 }

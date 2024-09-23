@@ -4,10 +4,9 @@ import (
 	"database/sql"
 	"flag"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
-	_ "github.com/jackc/pgx/v4/stdlib"
-	"log"
-
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/dataBase"
 	"github.com/caarlos0/env/v6"
+	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 var (
@@ -21,7 +20,17 @@ var (
 	FlagDatabaseDsn     = flag.String("d", "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable", "Определяет загружать ранее сохранённые значения из базы при старте сервера")
 )
 
-// C:\GO\KursMetrics\cmd\server\metrics-db.json
+//type VarFlag struct {
+//	FlagAddressAndPort  flag.Flag
+//	FlagRreportInterval flag.Flag
+//	FlagPollInterval    flag.Flag
+//	FlagLogLevel        flag.Flag
+//	FlagStoreInterval   flag.Flag
+//	FlagFileStoragePath flag.Flag
+//	FlagRestore         flag.Flag
+//	FlagDatabaseDsn     flag.Flag
+//}
+
 type VarEnv struct {
 	EnvAddress         string `env:"ADDRESS"`
 	EnvReportInterval  int64  `env:"REPORT_INTERVAL"`
@@ -33,25 +42,7 @@ type VarEnv struct {
 	EnvDatabaseDsn     string `env:"DATABASE_DSN"`
 }
 
-type ConnectSQL struct {
-	user      string
-	password  string
-	dbname    string
-	sslmode   string
-	tableName string
-}
-
-func ConfigSQL() string {
-	var createTableSQL = `
-  CREATE TABLE IF NOT EXISTS metric (
-      "id" TEXT NOT NULL,
-      "type" TEXT NOT NULL,
-      "value" DOUBLE PRECISION NULL,
-      PRIMARY KEY ("id", "type")
-  );`
-	return createTableSQL
-}
-
+// ConnectDB функция для проверки подключения к БД
 func ConnectDB() (*sql.DB, error) {
 	db, err := sql.Open("pgx", *FlagDatabaseDsn)
 	logger.Log.Infoln("Ссылка на подключение: %s", *FlagDatabaseDsn)
@@ -69,15 +60,52 @@ func ConnectDB() (*sql.DB, error) {
 	return db, nil
 }
 
-// InitializeGlobals инициализирует флаги на основе значений из конфигурации
-func InitializeGlobals() {
-	flag.Parse()
-	var cfg VarEnv
-	err := env.Parse(&cfg)
+// InitializeConfigAgent Конфиг для  Агента
+func InitializeConfigAgent() {
+	//Запускает улучшенный логер
+	err := logger.Initialize("info")
 	if err != nil {
-		log.Println(err)
+		panic("Не удалось инициализировать логгер")
 	}
 
+	//Парсит флаги
+	flag.Parse()
+	var cfg VarEnv
+
+	//Парсит переменные окружения
+	err = env.Parse(&cfg)
+	if err != nil {
+		logger.Log.Info("Ошибка на этапе парсинга переменных окружения", err)
+	}
+}
+
+// InitializeConfigServer Конфиг для Сервера
+func InitializeConfigServer() {
+	//Запускает улучшенный логер
+	err := logger.Initialize("info")
+	if err != nil {
+		panic("Не удалось инициализировать логгер")
+	}
+
+	//Парсит флаги
+	flag.Parse()
+	var cfg VarEnv
+
+	//Парсит переменные окружения
+	err = env.Parse(&cfg)
+	if err != nil {
+		logger.Log.Info("Ошибка на этапе парсинга переменных окружения", err)
+	}
+
+	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
+	parseAllEnv(cfg)
+
+	//Запускается функция, которая определит куда сохранять данные
+	dataBase.InitializeStorage(*FlagFileStoragePath, *FlagRestore, *FlagDatabaseDsn)
+}
+
+// parseAllEnv ты была рождена, что бы уменишьт другую функцию
+func parseAllEnv(cfg VarEnv) {
 	checkForNil(cfg.EnvAddress, FlagAddressAndPort)
 	checkForNil(cfg.EnvReportInterval, FlagRreportInterval)
 	checkForNil(cfg.EnvPollInterval, FlagPollInterval)
@@ -89,8 +117,8 @@ func InitializeGlobals() {
 }
 
 // checkForNil проверяет значение и устанавливает его, если оно не нулевое
-func checkForNil(enc interface{}, flag interface{}) {
-	switch enc := enc.(type) {
+func checkForNil(env interface{}, flag interface{}) {
+	switch enc := env.(type) {
 	case string:
 		if enc != "" {
 			*flag.(*string) = enc
