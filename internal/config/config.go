@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	FlagAddressAndPort  = flag.String("a", "localhost:8081", "Указываем адресс и порт по которому будем потключаться")
+	FlagAddressAndPort  = flag.String("a", "localhost:8080", "Указываем адресс и порт по которому будем потключаться")
 	FlagRreportInterval = flag.Int64("r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
 	FlagPollInterval    = flag.Int64("p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
 	FlagLogLevel        = flag.String("l", "info", "Уровень логирования")
