@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 )

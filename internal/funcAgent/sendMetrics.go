@@ -12,6 +12,7 @@ import (
 	"time"
 )
 
+// SendingMetric Функция которая каджые $FlagPollInterval секунд запускает функию по отправке метрик
 func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]int64) {
 	ticker1 := time.NewTicker(time.Duration(*config.FlagPollInterval) * time.Second)
 	ticker2 := time.NewTicker(time.Duration(*config.FlagRreportInterval) * time.Second)
@@ -31,6 +32,7 @@ func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]in
 	}
 }
 
+// SendJSONMetricsGauge Отправляет метрики типа Gauge по по url
 func SendJSONMetricsGauge(mapMetric map[string]float64) {
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/update/", *config.FlagAddressAndPort)
@@ -67,6 +69,7 @@ func SendJSONMetricsGauge(mapMetric map[string]float64) {
 
 }
 
+// SendJSONMetricsCounter Отправляет метрики типа Gauge по по url
 func SendJSONMetricsCounter(mapMetric map[string]int64) {
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/update/", *config.FlagAddressAndPort)
@@ -102,6 +105,7 @@ func SendJSONMetricsCounter(mapMetric map[string]int64) {
 	}
 }
 
+// gzipCompress архивирует данные для последующего отправления
 func gzipCompress(data []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := gzip.NewWriter(&buf)

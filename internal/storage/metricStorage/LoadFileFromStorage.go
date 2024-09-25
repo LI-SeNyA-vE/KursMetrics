@@ -2,7 +2,7 @@ package storage
 
 import (
 	"encoding/json"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"os"
 )
 

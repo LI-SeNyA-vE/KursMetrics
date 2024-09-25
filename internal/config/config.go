@@ -3,14 +3,14 @@ package config
 import (
 	"database/sql"
 	"flag"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/dataBase"
 	"github.com/caarlos0/env/v6"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
 var (
-	FlagAddressAndPort  = flag.String("a", "localhost:8080", "Указываем адресс и порт по которому будем потключаться")
+	FlagAddressAndPort  = flag.String("a", "localhost:8081", "Указываем адресс и порт по которому будем потключаться")
 	FlagRreportInterval = flag.Int64("r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
 	FlagPollInterval    = flag.Int64("p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
 	FlagLogLevel        = flag.String("l", "info", "Уровень логирования")

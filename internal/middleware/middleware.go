@@ -2,11 +2,10 @@ package middleware
 
 import (
 	"compress/gzip"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"io"
 	"net/http"
 	"time"
-
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
 )
 
 type (

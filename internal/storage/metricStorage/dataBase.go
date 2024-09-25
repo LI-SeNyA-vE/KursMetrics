@@ -3,7 +3,7 @@ package storage
 import (
 	"database/sql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 )
 
 func CrereateDB(db *sql.DB, createTableSQL string) {

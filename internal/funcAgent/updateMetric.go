@@ -5,6 +5,7 @@ import (
 	"runtime"
 )
 
+// UpdateMetric обновляет/вытягивает с системы метрики ПК
 func UpdateMetric() (map[string]float64, map[string]int64) {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)

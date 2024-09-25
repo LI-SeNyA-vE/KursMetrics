@@ -3,7 +3,7 @@ package main
 import (
 	config "github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/saveMetric"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"

@@ -2,7 +2,7 @@ package dataBase
 
 import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"log"
 )
