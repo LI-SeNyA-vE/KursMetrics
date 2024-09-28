@@ -14,5 +14,6 @@ func main() {
 
 	//Запускает горутину на отправку файлов кажные N секунд
 	go func() { funcAgent.SendingMetric(gaugeMetrics, counterMetrics) }()
+	select {}
 
 }
