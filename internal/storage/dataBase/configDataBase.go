@@ -40,6 +40,7 @@ func CreateConfigSQL() string {
 }
 
 func InitializeStorage() {
+	logger.Log.Infof("Флаг БД %s Флаг файла %s", cfgFlags.FlagDatabaseDsn, cfgFlags.FlagRestore)
 	if cfgFlags.FlagDatabaseDsn != "" {
 		db, err := ConnectDB()
 		if err != nil {
