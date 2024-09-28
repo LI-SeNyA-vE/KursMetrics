@@ -4,6 +4,7 @@ import (
 	config "github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/dataBase"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/saveMetric"
 	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -12,22 +13,26 @@ import (
 
 func main() {
 	//Иницаилизирует все конфиги и всё в этом духе
-	config.InitializeConfigServer()
+	cfgFlags := config.InitializeConfigServer()
+
+	//Запускается функция, которая определит куда сохранять данные
+	dataBase.InitializeStorage()
 
 	//Создаёт горутину, для сохранения данных в файл
-	go func() { saveMetric.SaveMetric(*config.FlagFileStoragePath, *config.FlagStoreInterval) }()
+	go func() { saveMetric.SaveMetric(cfgFlags.FlagFileStoragePath, cfgFlags.FlagStoreInterval) }()
 
 	//Создаёт роутер
 	r := handlers.SetapRouter()
 
 	//Старт сервера
-	startServer(r)
+	startServer(r, *cfgFlags)
 }
 
-func startServer(r *chi.Mux) {
-	err := http.ListenAndServe(*config.FlagAddressAndPort, r)
+func startServer(r *chi.Mux, cfgFlags config.VarFlag) {
+	logger.Log.Info("Открыт сервер ", cfgFlags.FlagAddressAndPort)
+	err := http.ListenAndServe(cfgFlags.FlagAddressAndPort, r)
 	if err != nil {
 		panic(err)
 	}
-	logger.Log.Info("Открыт сервер ", *config.FlagAddressAndPort)
+
 }

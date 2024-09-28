@@ -1,15 +1,13 @@
 package config
 
 import (
-	"database/sql"
 	"flag"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/dataBase"
 	"github.com/caarlos0/env/v6"
 	_ "github.com/jackc/pgx/v4/stdlib"
 )
 
-var (
+/*var (
 	FlagAddressAndPort  = flag.String("a", "localhost:8080", "Указываем адресс и порт по которому будем потключаться")
 	FlagRreportInterval = flag.Int64("r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
 	FlagPollInterval    = flag.Int64("p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
@@ -18,18 +16,19 @@ var (
 	FlagFileStoragePath = flag.String("f", "/tmp/metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
 	FlagRestore         = flag.Bool("b", true, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
 	FlagDatabaseDsn     = flag.String("d", "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable", "Определяет загружать ранее сохранённые значения из базы при старте сервера")
-)
+)*/
 
-//type VarFlag struct {
-//	FlagAddressAndPort  flag.Flag
-//	FlagRreportInterval flag.Flag
-//	FlagPollInterval    flag.Flag
-//	FlagLogLevel        flag.Flag
-//	FlagStoreInterval   flag.Flag
-//	FlagFileStoragePath flag.Flag
-//	FlagRestore         flag.Flag
-//	FlagDatabaseDsn     flag.Flag
-//}
+// VarFlag содержит все флаги как обычные поля
+type VarFlag struct {
+	FlagAddressAndPort  string
+	FlagReportInterval  int64
+	FlagPollInterval    int64
+	FlagLogLevel        string
+	FlagStoreInterval   int64
+	FlagFileStoragePath string
+	FlagRestore         bool
+	FlagDatabaseDsn     string
+}
 
 type VarEnv struct {
 	EnvAddress         string `env:"ADDRESS"`
@@ -42,24 +41,6 @@ type VarEnv struct {
 	EnvDatabaseDsn     string `env:"DATABASE_DSN"`
 }
 
-// ConnectDB функция для проверки подключения к БД
-func ConnectDB() (*sql.DB, error) {
-	db, err := sql.Open("pgx", *FlagDatabaseDsn)
-	logger.Log.Infoln("Ссылка на подключение: %s", *FlagDatabaseDsn)
-	if err != nil {
-		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
-		return db, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		logger.Log.Infoln("Не удалось установить соединение с базой данных: %v", err)
-		return db, err
-	}
-
-	return db, nil
-}
-
 // InitializeConfigAgent Конфиг для  Агента
 func InitializeConfigAgent() {
 	//Запускает улучшенный логер
@@ -70,9 +51,9 @@ func InitializeConfigAgent() {
 
 	//Парсит флаги
 	flag.Parse()
-	var cfg VarEnv
 
 	//Парсит переменные окружения
+	var cfg VarEnv
 	err = env.Parse(&cfg)
 	if err != nil {
 		logger.Log.Info("Ошибка на этапе парсинга переменных окружения", err)
@@ -80,7 +61,7 @@ func InitializeConfigAgent() {
 }
 
 // InitializeConfigServer Конфиг для Сервера
-func InitializeConfigServer() {
+func InitializeConfigServer() (cfgFlags *VarFlag) {
 	//Запускает улучшенный логер
 	err := logger.Initialize("info")
 	if err != nil {
@@ -88,32 +69,50 @@ func InitializeConfigServer() {
 	}
 
 	//Парсит флаги
-	flag.Parse()
-	var cfg VarEnv
+	cfgFlags = NewVarFlag()
 
 	//Парсит переменные окружения
-	err = env.Parse(&cfg)
+	var cfgEnv VarEnv
+	err = env.Parse(&cfgEnv)
 	if err != nil {
 		logger.Log.Info("Ошибка на этапе парсинга переменных окружения", err)
 	}
 
 	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
-	parseAllEnv(cfg)
+	parseAllEnv(cfgEnv, *cfgFlags)
+	return cfgFlags
+}
 
-	//Запускается функция, которая определит куда сохранять данные
-	dataBase.InitializeStorage(*FlagFileStoragePath, *FlagRestore, *FlagDatabaseDsn)
+// NewVarFlag инициализирует структуру VarFlag и парсит флаги командной строки
+func NewVarFlag() *VarFlag {
+	cfgFlags := &VarFlag{}
+
+	// Определение флагов
+	flag.StringVar(&cfgFlags.FlagAddressAndPort, "a", "localhost:8080", "Указываем адрес и порт по которому будем подключаться")
+	flag.Int64Var(&cfgFlags.FlagReportInterval, "r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
+	flag.Int64Var(&cfgFlags.FlagPollInterval, "p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
+	flag.StringVar(&cfgFlags.FlagLogLevel, "l", "info", "Уровень логирования")
+	flag.Int64Var(&cfgFlags.FlagStoreInterval, "i", 30, "Интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
+	flag.StringVar(&cfgFlags.FlagFileStoragePath, "f", "/tmp/metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
+	flag.BoolVar(&cfgFlags.FlagRestore, "b", true, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
+	flag.StringVar(&cfgFlags.FlagDatabaseDsn, "d", "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable", "Строка подключения к базе данных")
+
+	// Парсинг флагов
+	flag.Parse()
+
+	return cfgFlags
 }
 
 // parseAllEnv ты была рождена, что бы уменишьт другую функцию
-func parseAllEnv(cfg VarEnv) {
-	checkForNil(cfg.EnvAddress, FlagAddressAndPort)
-	checkForNil(cfg.EnvReportInterval, FlagRreportInterval)
-	checkForNil(cfg.EnvPollInterval, FlagPollInterval)
-	checkForNil(cfg.EnvLogLevel, FlagLogLevel)
-	checkForNil(cfg.EnvStoreInterval, FlagStoreInterval)
-	checkForNil(cfg.EnvFileStoragePath, FlagFileStoragePath)
-	checkForNil(cfg.EnvRestore, FlagRestore)
-	checkForNil(cfg.EnvDatabaseDsn, FlagDatabaseDsn)
+func parseAllEnv(cfgEnv VarEnv, cfgFlags VarFlag) {
+	checkForNil(cfgEnv.EnvAddress, cfgFlags.FlagAddressAndPort)
+	checkForNil(cfgEnv.EnvReportInterval, cfgFlags.FlagReportInterval)
+	checkForNil(cfgEnv.EnvPollInterval, cfgFlags.FlagPollInterval)
+	checkForNil(cfgEnv.EnvLogLevel, cfgFlags.FlagLogLevel)
+	checkForNil(cfgEnv.EnvStoreInterval, cfgFlags.FlagStoreInterval)
+	checkForNil(cfgEnv.EnvFileStoragePath, cfgFlags.FlagFileStoragePath)
+	checkForNil(cfgEnv.EnvRestore, cfgFlags.FlagRestore)
+	checkForNil(cfgEnv.EnvDatabaseDsn, cfgFlags.FlagDatabaseDsn)
 }
 
 // checkForNil проверяет значение и устанавливает его, если оно не нулевое

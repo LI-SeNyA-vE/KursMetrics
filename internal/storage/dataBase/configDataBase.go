@@ -1,11 +1,32 @@
 package dataBase
 
 import (
+	"database/sql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"log"
 )
+
+var cfgFlags = config.VarFlag{}
+
+// ConnectDB функция для проверки подключения к БД
+func ConnectDB() (*sql.DB, error) {
+	db, err := sql.Open("pgx", cfgFlags.FlagDatabaseDsn)
+	logger.Log.Infoln("Ссылка на подключение: %s", cfgFlags.FlagDatabaseDsn)
+	if err != nil {
+		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
+		return db, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		logger.Log.Infoln("Не удалось установить соединение с базой данных: %v", err)
+		return db, err
+	}
+
+	return db, nil
+}
 
 func CreateConfigSQL() string {
 	var createTableSQL = `
@@ -18,16 +39,16 @@ func CreateConfigSQL() string {
 	return createTableSQL
 }
 
-func InitializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
-	if loadDataBase != "" {
-		db, err := config.ConnectDB()
+func InitializeStorage() {
+	if cfgFlags.FlagDatabaseDsn != "" {
+		db, err := ConnectDB()
 		if err != nil {
 			logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
 		}
 		defer db.Close()
 
 		configCreateSQL := CreateConfigSQL()
-		metricStorage.CrereateDB(db, configCreateSQL)
+		CrereateDB(db, configCreateSQL)
 
 		rows, err := db.Query("SELECT Id, Type, Name, Value FROM metric")
 		if err != nil {
@@ -58,8 +79,8 @@ func InitializeStorage(cdFile string, resMetricBool bool, loadDataBase string) {
 			return
 		}
 	}
-	if resMetricBool {
-		metricStorage.LoadMetricFromFile(cdFile)
+	if cfgFlags.FlagRestore {
+		metricStorage.LoadMetricFromFile(cfgFlags.FlagFileStoragePath)
 	}
 	return
 }

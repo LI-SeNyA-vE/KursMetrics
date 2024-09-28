@@ -1,9 +1,9 @@
-package storage
+package dataBase
 
 import (
 	"database/sql"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 )
 
 func CrereateDB(db *sql.DB, createTableSQL string) {
@@ -17,11 +17,11 @@ func CrereateDB(db *sql.DB, createTableSQL string) {
 }
 
 func SaveInDatabase() {
-	allMetrics := MetricStorage{
-		Gauge:   StorageMetric.GetAllGauges(),
-		Counter: StorageMetric.GetAllCounters(),
+	allMetrics := storage.MetricStorage{
+		Gauge:   storage.StorageMetric.GetAllGauges(),
+		Counter: storage.StorageMetric.GetAllCounters(),
 	}
-	db, err := config.ConnectDB()
+	db, err := ConnectDB()
 	if err != nil {
 		logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
 	}

@@ -15,6 +15,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var cfgFlags = config.VarFlag{}
+
 // PostAddValue Обрабатывает полный url запрос. Если всё правильно сохраняет метрику в память
 func PostAddValue(w http.ResponseWriter, r *http.Request) {
 	typeMetric := chi.URLParam(r, "typeMetric")
@@ -224,7 +226,7 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 // Ping Кидает запрос в базу, для прорки её наличия
 func Ping(w http.ResponseWriter, r *http.Request) {
 
-	db, err := sql.Open("pgx", *config.FlagDatabaseDsn)
+	db, err := sql.Open("pgx", cfgFlags.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
