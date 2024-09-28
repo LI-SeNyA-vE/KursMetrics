@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"encoding/json"
 	"fmt"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-resty/resty/v2"
 	"log"
@@ -13,10 +12,9 @@ import (
 )
 
 // SendingMetric Функция которая каджые $FlagPollInterval секунд запускает функию по отправке метрик
-func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]int64) {
-	cfgFlags := config.CfgFlags
-	ticker1 := time.NewTicker(time.Duration(cfgFlags.FlagPollInterval) * time.Second)
-	ticker2 := time.NewTicker(time.Duration(cfgFlags.FlagReportInterval) * time.Second)
+func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]int64, flagPollInterval int64, flagReportInterval int64, flagAddressAndPort string) {
+	ticker1 := time.NewTicker(time.Duration(flagPollInterval) * time.Second)
+	ticker2 := time.NewTicker(time.Duration(flagReportInterval) * time.Second)
 	defer ticker1.Stop()
 	defer ticker2.Stop()
 
@@ -24,20 +22,19 @@ func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]in
 		select {
 		case <-ticker1.C:
 			gaugeMetrics, counterMetrics = UpdateMetric()
-			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", cfgFlags.FlagPollInterval)
+			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", flagPollInterval)
 		case <-ticker2.C:
-			SendJSONMetricsGauge(gaugeMetrics)
-			SendJSONMetricsCounter(counterMetrics)
-			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", cfgFlags.FlagReportInterval)
+			SendJSONMetricsGauge(gaugeMetrics, flagAddressAndPort)
+			SendJSONMetricsCounter(counterMetrics, flagAddressAndPort)
+			fmt.Printf("Пауза в %d секунд между отправкой метрик на сервер\n", flagReportInterval)
 		}
 	}
 }
 
 // SendJSONMetricsGauge Отправляет метрики типа Gauge по по url
-func SendJSONMetricsGauge(mapMetric map[string]float64) {
-	cfgFlags := config.CfgFlags
+func SendJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort string) {
 	client := resty.New()
-	url := fmt.Sprintf("http://%s/update/", cfgFlags.FlagAddressAndPort)
+	url := fmt.Sprintf("http://%s/update/", flagAddressAndPort)
 
 	for nameMetric, value := range mapMetric {
 		metrics := metricStorage.Metrics{
@@ -72,10 +69,9 @@ func SendJSONMetricsGauge(mapMetric map[string]float64) {
 }
 
 // SendJSONMetricsCounter Отправляет метрики типа Gauge по по url
-func SendJSONMetricsCounter(mapMetric map[string]int64) {
-	cfgFlags := config.CfgFlags
+func SendJSONMetricsCounter(mapMetric map[string]int64, flagAddressAndPort string) {
 	client := resty.New()
-	url := fmt.Sprintf("http://%s/update/", cfgFlags.FlagAddressAndPort)
+	url := fmt.Sprintf("http://%s/update/", flagAddressAndPort)
 
 	for nameMetric, value := range mapMetric {
 		metrics := metricStorage.Metrics{

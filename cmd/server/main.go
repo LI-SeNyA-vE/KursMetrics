@@ -25,7 +25,7 @@ func main() {
 	r := handlers.SetapRouter()
 
 	//Старт сервера
-	startServer(r, *cfgFlags)
+	startServer(r, cfgFlags)
 }
 
 func startServer(r *chi.Mux, cfgFlags config.VarFlag) {

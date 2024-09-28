@@ -7,13 +7,15 @@ import (
 
 func main() {
 	//Инициализация конфига для Агента
-	config.InitializeConfig()
+	cfgFlags := config.InitializeConfig()
 
 	//Вытаскиваем/обновляем метрики
 	gaugeMetrics, counterMetrics := funcAgent.UpdateMetric()
 
 	//Запускает горутину на отправку файлов кажные N секунд
-	go func() { funcAgent.SendingMetric(gaugeMetrics, counterMetrics) }()
+	go func() {
+		funcAgent.SendingMetric(gaugeMetrics, counterMetrics, cfgFlags.FlagPollInterval, cfgFlags.FlagReportInterval, cfgFlags.FlagAddressAndPort)
+	}()
 	select {}
 
 }

@@ -19,9 +19,6 @@ import (
 )*/
 
 // VarFlag содержит все флаги как обычные поля
-
-var CfgFlags = VarFlag{}
-
 type VarFlag struct {
 	FlagAddressAndPort  string
 	FlagReportInterval  int64
@@ -44,11 +41,7 @@ type VarEnv struct {
 	EnvDatabaseDsn     string `env:"DATABASE_DSN"`
 }
 
-func (f *VarFlag) FullVarFlag() VarFlag {
-	return CfgFlags
-}
-
-func InitializeConfig() (cfgFlags *VarFlag) {
+func InitializeConfig() (cfgFlags VarFlag) {
 	//Запускает улучшенный логер
 	err := logger.Initialize("info")
 	if err != nil {
@@ -56,7 +49,7 @@ func InitializeConfig() (cfgFlags *VarFlag) {
 	}
 
 	//Парсит флаги
-	CfgFlags = NewVarFlag()
+	cfgFlags = NewVarFlag()
 
 	//Парсит переменные окружения
 	var cfgEnv VarEnv
@@ -66,7 +59,7 @@ func InitializeConfig() (cfgFlags *VarFlag) {
 	}
 
 	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
-	parseAllEnv(cfgEnv, CfgFlags)
+	parseAllEnv(cfgEnv, cfgFlags)
 	return cfgFlags
 }
 
