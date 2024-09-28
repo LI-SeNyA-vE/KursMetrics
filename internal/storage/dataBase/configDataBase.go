@@ -8,12 +8,10 @@ import (
 	"log"
 )
 
-var cfgFlags = config.VarFlag{}
-
 // ConnectDB функция для проверки подключения к БД
 func ConnectDB() (*sql.DB, error) {
-	db, err := sql.Open("pgx", cfgFlags.FlagDatabaseDsn)
-	logger.Log.Infoln("Ссылка на подключение: %s", cfgFlags.FlagDatabaseDsn)
+	db, err := sql.Open("pgx", config.ConfigFlags.FlagDatabaseDsn)
+	logger.Log.Infoln("Ссылка на подключение: %s", config.ConfigFlags.FlagDatabaseDsn)
 	if err != nil {
 		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
 		return db, err
@@ -40,8 +38,8 @@ func CreateConfigSQL() string {
 }
 
 func InitializeStorage() {
-	logger.Log.Infof("Флаг БД %s Флаг файла %s", cfgFlags.FlagDatabaseDsn, cfgFlags.FlagRestore)
-	if cfgFlags.FlagDatabaseDsn != "" {
+	logger.Log.Infof("Флаг БД %s Флаг файла %t", config.ConfigFlags.FlagDatabaseDsn, config.ConfigFlags.FlagRestore)
+	if config.ConfigFlags.FlagDatabaseDsn != "" {
 		db, err := ConnectDB()
 		if err != nil {
 			logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
@@ -80,8 +78,8 @@ func InitializeStorage() {
 			return
 		}
 	}
-	if cfgFlags.FlagRestore {
-		metricStorage.LoadMetricFromFile(cfgFlags.FlagFileStoragePath)
+	if config.ConfigFlags.FlagRestore {
+		metricStorage.LoadMetricFromFile(config.ConfigFlags.FlagFileStoragePath)
 	}
 	return
 }

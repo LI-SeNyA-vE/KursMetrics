@@ -31,7 +31,10 @@ type VarEnv struct {
 	EnvDatabaseDsn     string `env:"DATABASE_DSN"`
 }
 
-func InitializeConfig() (cfgFlags VarFlag) {
+// ConfigFlags глобальная переменная, содержащая все флаги
+var ConfigFlags VarFlag
+
+func InitializeConfig() {
 	//Запускает улучшенный логер
 	err := logger.Initialize("info")
 	if err != nil {
@@ -39,7 +42,7 @@ func InitializeConfig() (cfgFlags VarFlag) {
 	}
 
 	//Парсит флаги
-	cfgFlags = NewVarFlag()
+	ConfigFlags = NewVarFlag()
 
 	//Парсит переменные окружения
 	var cfgEnv VarEnv
@@ -49,8 +52,7 @@ func InitializeConfig() (cfgFlags VarFlag) {
 	}
 
 	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
-	parseAllEnv(cfgEnv, &cfgFlags)
-	return cfgFlags
+	parseAllEnv(cfgEnv, &ConfigFlags)
 }
 
 // NewVarFlag инициализирует структуру VarFlag и парсит флаги командной строки
