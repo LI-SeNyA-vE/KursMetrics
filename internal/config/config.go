@@ -19,6 +19,9 @@ import (
 )*/
 
 // VarFlag содержит все флаги как обычные поля
+
+var CfgFlags = VarFlag{}
+
 type VarFlag struct {
 	FlagAddressAndPort  string
 	FlagReportInterval  int64
@@ -41,27 +44,11 @@ type VarEnv struct {
 	EnvDatabaseDsn     string `env:"DATABASE_DSN"`
 }
 
-// InitializeConfigAgent Конфиг для  Агента
-func InitializeConfigAgent() {
-	//Запускает улучшенный логер
-	err := logger.Initialize("info")
-	if err != nil {
-		panic("Не удалось инициализировать логгер")
-	}
-
-	//Парсит флаги
-	flag.Parse()
-
-	//Парсит переменные окружения
-	var cfg VarEnv
-	err = env.Parse(&cfg)
-	if err != nil {
-		logger.Log.Info("Ошибка на этапе парсинга переменных окружения", err)
-	}
+func (f *VarFlag) FullVarFlag() VarFlag {
+	return CfgFlags
 }
 
-// InitializeConfigServer Конфиг для Сервера
-func InitializeConfigServer() (cfgFlags *VarFlag) {
+func InitializeConfig() (cfgFlags *VarFlag) {
 	//Запускает улучшенный логер
 	err := logger.Initialize("info")
 	if err != nil {
@@ -69,7 +56,7 @@ func InitializeConfigServer() (cfgFlags *VarFlag) {
 	}
 
 	//Парсит флаги
-	cfgFlags = NewVarFlag()
+	CfgFlags = NewVarFlag()
 
 	//Парсит переменные окружения
 	var cfgEnv VarEnv
@@ -79,12 +66,12 @@ func InitializeConfigServer() (cfgFlags *VarFlag) {
 	}
 
 	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
-	parseAllEnv(cfgEnv, *cfgFlags)
+	parseAllEnv(cfgEnv, CfgFlags)
 	return cfgFlags
 }
 
 // NewVarFlag инициализирует структуру VarFlag и парсит флаги командной строки
-func NewVarFlag() *VarFlag {
+func NewVarFlag() VarFlag {
 	cfgFlags := &VarFlag{}
 
 	// Определение флагов
@@ -100,10 +87,10 @@ func NewVarFlag() *VarFlag {
 	// Парсинг флагов
 	flag.Parse()
 
-	return cfgFlags
+	return *cfgFlags
 }
 
-// parseAllEnv ты была рождена, что бы уменишьт другую функцию
+// parseAllEnv ты была рождена, что бы уменишить другую функцию
 func parseAllEnv(cfgEnv VarEnv, cfgFlags VarFlag) {
 	checkForNil(cfgEnv.EnvAddress, cfgFlags.FlagAddressAndPort)
 	checkForNil(cfgEnv.EnvReportInterval, cfgFlags.FlagReportInterval)

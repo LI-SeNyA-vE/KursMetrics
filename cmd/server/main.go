@@ -13,7 +13,7 @@ import (
 
 func main() {
 	//Иницаилизирует все конфиги и всё в этом духе
-	cfgFlags := config.InitializeConfigServer()
+	cfgFlags := config.InitializeConfig()
 
 	//Запускается функция, которая определит куда сохранять данные
 	dataBase.InitializeStorage()

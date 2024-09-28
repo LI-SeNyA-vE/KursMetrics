@@ -7,7 +7,7 @@ import (
 
 func main() {
 	//Инициализация конфига для Агента
-	config.InitializeConfigAgent()
+	config.InitializeConfig()
 
 	//Вытаскиваем/обновляем метрики
 	gaugeMetrics, counterMetrics := funcAgent.UpdateMetric()

@@ -12,10 +12,9 @@ import (
 	"time"
 )
 
-var cfgFlags = config.VarFlag{}
-
 // SendingMetric Функция которая каджые $FlagPollInterval секунд запускает функию по отправке метрик
 func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]int64) {
+	cfgFlags := config.CfgFlags
 	ticker1 := time.NewTicker(time.Duration(cfgFlags.FlagPollInterval) * time.Second)
 	ticker2 := time.NewTicker(time.Duration(cfgFlags.FlagReportInterval) * time.Second)
 	defer ticker1.Stop()
@@ -36,6 +35,7 @@ func SendingMetric(gaugeMetrics map[string]float64, counterMetrics map[string]in
 
 // SendJSONMetricsGauge Отправляет метрики типа Gauge по по url
 func SendJSONMetricsGauge(mapMetric map[string]float64) {
+	cfgFlags := config.CfgFlags
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/update/", cfgFlags.FlagAddressAndPort)
 
@@ -73,6 +73,7 @@ func SendJSONMetricsGauge(mapMetric map[string]float64) {
 
 // SendJSONMetricsCounter Отправляет метрики типа Gauge по по url
 func SendJSONMetricsCounter(mapMetric map[string]int64) {
+	cfgFlags := config.CfgFlags
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/update/", cfgFlags.FlagAddressAndPort)
 
