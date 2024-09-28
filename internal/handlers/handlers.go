@@ -53,9 +53,11 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	nameMetric := chi.URLParam(r, "nameMetric")
 	typeMetric := chi.URLParam(r, "typeMetric")
+	logger.Log.Info("Запрос с " + nameMetric + " " + typeMetric)
 	value, err := storageMetric.StorageMetric.GetValue(typeMetric, nameMetric)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		logger.Log.Info("ошибка в GetReceivingMetric")
 		return
 	}
 	io.WriteString(w, fmt.Sprint(value))
