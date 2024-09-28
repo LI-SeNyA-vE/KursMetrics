@@ -5,18 +5,8 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"github.com/caarlos0/env/v6"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"reflect"
 )
-
-/*var (
-	FlagAddressAndPort  = flag.String("a", "localhost:8080", "Указываем адресс и порт по которому будем потключаться")
-	FlagRreportInterval = flag.Int64("r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
-	FlagPollInterval    = flag.Int64("p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
-	FlagLogLevel        = flag.String("l", "info", "Уровень логирования")
-	FlagStoreInterval   = flag.Int64("i", 30, "интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
-	FlagFileStoragePath = flag.String("f", "/tmp/metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
-	FlagRestore         = flag.Bool("b", true, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
-	FlagDatabaseDsn     = flag.String("d", "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable", "Определяет загружать ранее сохранённые значения из базы при старте сервера")
-)*/
 
 // VarFlag содержит все флаги как обычные поля
 type VarFlag struct {
@@ -59,7 +49,7 @@ func InitializeConfig() (cfgFlags VarFlag) {
 	}
 
 	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
-	parseAllEnv(cfgEnv, cfgFlags)
+	parseAllEnv(cfgEnv, &cfgFlags)
 	return cfgFlags
 }
 
@@ -84,31 +74,37 @@ func NewVarFlag() VarFlag {
 }
 
 // parseAllEnv ты была рождена, что бы уменишить другую функцию
-func parseAllEnv(cfgEnv VarEnv, cfgFlags VarFlag) {
-	checkForNil(cfgEnv.EnvAddress, cfgFlags.FlagAddressAndPort)
-	checkForNil(cfgEnv.EnvReportInterval, cfgFlags.FlagReportInterval)
-	checkForNil(cfgEnv.EnvPollInterval, cfgFlags.FlagPollInterval)
-	checkForNil(cfgEnv.EnvLogLevel, cfgFlags.FlagLogLevel)
-	checkForNil(cfgEnv.EnvStoreInterval, cfgFlags.FlagStoreInterval)
-	checkForNil(cfgEnv.EnvFileStoragePath, cfgFlags.FlagFileStoragePath)
-	checkForNil(cfgEnv.EnvRestore, cfgFlags.FlagRestore)
-	checkForNil(cfgEnv.EnvDatabaseDsn, cfgFlags.FlagDatabaseDsn)
+// parseAllEnv обновляет флаги на основе переменных окружения
+func parseAllEnv(cfgEnv VarEnv, cfgFlags *VarFlag) {
+	checkForNil(cfgEnv.EnvAddress, &cfgFlags.FlagAddressAndPort)
+	checkForNil(cfgEnv.EnvReportInterval, &cfgFlags.FlagReportInterval)
+	checkForNil(cfgEnv.EnvPollInterval, &cfgFlags.FlagPollInterval)
+	checkForNil(cfgEnv.EnvLogLevel, &cfgFlags.FlagLogLevel)
+	checkForNil(cfgEnv.EnvStoreInterval, &cfgFlags.FlagStoreInterval)
+	checkForNil(cfgEnv.EnvFileStoragePath, &cfgFlags.FlagFileStoragePath)
+	checkForNil(cfgEnv.EnvRestore, &cfgFlags.FlagRestore)
+	checkForNil(cfgEnv.EnvDatabaseDsn, &cfgFlags.FlagDatabaseDsn)
 }
 
 // checkForNil проверяет значение и устанавливает его, если оно не нулевое
 func checkForNil(env interface{}, flag interface{}) {
-	switch enc := env.(type) {
-	case string:
-		if enc != "" {
-			*flag.(*string) = enc
-		}
-	case int64:
-		if enc != 0 {
-			*flag.(*int64) = enc
-		}
-	case bool:
-		if enc {
-			*flag.(*bool) = enc
+	envValue := reflect.ValueOf(env)
+	flagValue := reflect.ValueOf(flag)
+
+	// Проверяем, что flag является указателем
+	if flagValue.Kind() != reflect.Ptr {
+		logger.Log.Info("flag должен быть указателем")
+	}
+
+	// Получаем реальное значение переменной флага
+	flagElem := flagValue.Elem()
+
+	// Проверяем типы и обновляем флаг, если env не пустое
+	if !envValue.IsZero() {
+		if envValue.Type().AssignableTo(flagElem.Type()) {
+			flagElem.Set(envValue)
+		} else {
+			logger.Log.Infof("Невозможно присвоить тип %s к %s\n", envValue.Type(), flagElem.Type())
 		}
 	}
 }
