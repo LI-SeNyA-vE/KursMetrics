@@ -19,7 +19,9 @@ func main() {
 	dataBase.InitializeStorage()
 
 	//Создаёт горутину, для сохранения данных в файл
-	go func() { saveMetric.SaveMetric(cfgFlags.FlagFileStoragePath, cfgFlags.FlagStoreInterval) }()
+	go func() {
+		saveMetric.SaveMetric(cfgFlags.FlagFileStoragePath, cfgFlags.FlagStoreInterval, cfgFlags.FlagDatabaseDsn)
+	}()
 
 	//Создаёт роутер
 	r := handlers.SetapRouter()

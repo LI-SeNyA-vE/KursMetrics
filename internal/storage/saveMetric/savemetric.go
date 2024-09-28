@@ -1,22 +1,19 @@
 package saveMetric
 
 import (
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/dataBase"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"time"
 )
 
-var cfgFlags = config.VarFlag{}
-
-func SaveMetric(cdFile string, storeInterval int64) {
+func SaveMetric(cdFile string, storeInterval int64, flagDatabaseDsn string) {
 	if storeInterval == 0 {
 		return
 	}
 	ticker1 := time.NewTicker(time.Duration(storeInterval) * time.Second)
 	defer ticker1.Stop()
 
-	switch cfgFlags.FlagDatabaseDsn {
+	switch flagDatabaseDsn {
 	case "":
 	default:
 		for range ticker1.C {
@@ -25,9 +22,8 @@ func SaveMetric(cdFile string, storeInterval int64) {
 		return
 	}
 
-	switch cfgFlags.FlagFileStoragePath {
+	switch cdFile {
 	case "":
-
 	default:
 		for range ticker1.C {
 			metricStorage.SaveMetricToFile(cdFile)
