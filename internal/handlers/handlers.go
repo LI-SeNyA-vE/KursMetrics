@@ -228,7 +228,7 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 // Ping Кидает запрос в базу, для прорки её наличия
 func Ping(w http.ResponseWriter, r *http.Request) {
 
-	db, err := sql.Open("pgx", cfgFlags.FlagDatabaseDsn)
+	db, err := sql.Open("pgx", config.ConfigFlags.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
