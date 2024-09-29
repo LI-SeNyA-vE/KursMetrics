@@ -37,49 +37,44 @@ func CreateConfigSQL() string {
 	return createTableSQL
 }
 
-func InitializeStorage() {
-	logger.Log.Infof("Флаг БД %s Флаг файла %t", config.ConfigFlags.FlagDatabaseDsn, config.ConfigFlags.FlagRestore)
-	if config.ConfigFlags.FlagDatabaseDsn != "" {
-		db, err := ConnectDB()
-		if err != nil {
-			logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
-		}
-		defer db.Close()
+func LoadMetricFromDB() error {
+	db, err := ConnectDB()
+	if err != nil {
+		logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
+		return err
+	}
+	defer db.Close()
 
-		configCreateSQL := CreateConfigSQL()
-		CrereateDB(db, configCreateSQL)
+	configCreateSQL := CreateConfigSQL()
+	CrereateDB(db, configCreateSQL)
 
-		rows, err := db.Query("SELECT Id, Type, Name, Value FROM metric")
-		if err != nil {
-			logger.Log.Infoln("Ошибка получения данных из базы данных: %v", err)
-		} else {
-			for rows.Next() {
-				metric := &metricStorage.MetricStorage{}
-				var idMetric string
-				var typeMetric string
-				var nameMetric string
-				var valueMetric float64
-				//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
-				err := rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
-				if err != nil {
-					logger.Log.Infoln("Ошибка сканирования строки: %v", err)
-				}
-				defer rows.Close()
-
-				switch typeMetric { //Свитч для проверки что это запрос или gauge или counter
-				case "gauge": //Если передано значение 'gauge'
-					metric.UpdateGauge(nameMetric, valueMetric)
-				case "counter": //Если передано значение 'counter'
-					metric.UpdateCounter(nameMetric, int64(valueMetric))
-				default: //Если передано другое значение значение
-					log.Println("При вытягивание данных из БД оказалось что тип не gauge и не counter")
-				}
+	rows, err := db.Query("SELECT Id, Type, Name, Value FROM metric")
+	if err != nil {
+		logger.Log.Infoln("Ошибка получения данных из базы данных: %v", err)
+		return err
+	} else {
+		for rows.Next() {
+			metric := &metricStorage.MetricStorage{}
+			var idMetric string
+			var typeMetric string
+			var nameMetric string
+			var valueMetric float64
+			//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
+			err := rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
+			if err != nil {
+				logger.Log.Infoln("Ошибка сканирования строки: %v", err)
 			}
-			return
+			defer rows.Close()
+
+			switch typeMetric { //Свитч для проверки что это запрос или gauge или counter
+			case "gauge": //Если передано значение 'gauge'
+				metric.UpdateGauge(nameMetric, valueMetric)
+			case "counter": //Если передано значение 'counter'
+				metric.UpdateCounter(nameMetric, int64(valueMetric))
+			default: //Если передано другое значение значение
+				log.Println("При вытягивание данных из БД оказалось что тип не gauge и не counter")
+			}
 		}
+		return err
 	}
-	if config.ConfigFlags.FlagRestore {
-		metricStorage.LoadMetricFromFile(config.ConfigFlags.FlagFileStoragePath)
-	}
-	return
 }

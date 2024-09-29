@@ -16,10 +16,13 @@ func SaveMetric(cdFile string, storeInterval int64, flagDatabaseDsn string) {
 	switch flagDatabaseDsn {
 	case "":
 	default:
-		for range ticker1.C {
-			dataBase.SaveInDatabase()
+		_, err := dataBase.ConnectDB()
+		if err == nil {
+			for range ticker1.C {
+				dataBase.SaveInDatabase()
+			}
+			return
 		}
-		return
 	}
 
 	switch cdFile {

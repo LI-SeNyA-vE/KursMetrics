@@ -65,7 +65,7 @@ func NewVarFlag() VarFlag {
 	flag.Int64Var(&cfgFlags.FlagPollInterval, "p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
 	flag.StringVar(&cfgFlags.FlagLogLevel, "l", "info", "Уровень логирования")
 	flag.Int64Var(&cfgFlags.FlagStoreInterval, "i", 30, "Интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
-	flag.StringVar(&cfgFlags.FlagFileStoragePath, "f", "/tmp/metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
+	flag.StringVar(&cfgFlags.FlagFileStoragePath, "f", "C:\\Users\\Сеня\\Desktop\\KursMetrics\\cmd\\server\\metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
 	flag.BoolVar(&cfgFlags.FlagRestore, "b", true, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
 	flag.StringVar(&cfgFlags.FlagDatabaseDsn, "d", "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable", "Строка подключения к базе данных")
 
