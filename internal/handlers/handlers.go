@@ -227,7 +227,6 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 
 // Ping Кидает запрос в базу, для прорки её наличия
 func Ping(w http.ResponseWriter, r *http.Request) {
-
 	db, err := sql.Open("pgx", config.ConfigFlags.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -242,4 +241,32 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
+}
+
+// PostAddArrayMetrics Хендлер, который позволяет принимать массив метрик и сохранять его
+func PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
+	var buf bytes.Buffer
+	var arrayMetrics []storageMetric.Metrics
+
+	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(buf.Bytes(), &arrayMetrics) // Разбирает данные из массива byte в массив структур "metrics"
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for _, metrics := range arrayMetrics {
+		switch metrics.MType {
+		case "counter":
+			storageMetric.StorageMetric.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+		case "gauge":
+			storageMetric.StorageMetric.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+		}
+	}
+	w.WriteHeader(http.StatusOK)
 }

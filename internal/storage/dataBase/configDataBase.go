@@ -11,7 +11,6 @@ import (
 // ConnectDB функция для проверки подключения к БД
 func ConnectDB() (*sql.DB, error) {
 	db, err := sql.Open("pgx", config.ConfigFlags.FlagDatabaseDsn)
-	logger.Log.Infoln("Ссылка на подключение: %s", config.ConfigFlags.FlagDatabaseDsn)
 	if err != nil {
 		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
 		return db, err
@@ -40,7 +39,7 @@ func CreateConfigSQL() string {
 func LoadMetricFromDB() error {
 	db, err := ConnectDB()
 	if err != nil {
-		logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
+		logger.Log.Infoln("Ош ибка связанная с ДБ: %v", err)
 		return err
 	}
 	defer db.Close()
@@ -66,12 +65,12 @@ func LoadMetricFromDB() error {
 			}
 			defer rows.Close()
 
-			switch typeMetric { //Свитч для проверки что это запрос или gauge или counter
+			switch typeMetric { //Свитч для проверки, что это запрос или gauge, или counter
 			case "gauge": //Если передано значение 'gauge'
 				metric.UpdateGauge(nameMetric, valueMetric)
 			case "counter": //Если передано значение 'counter'
 				metric.UpdateCounter(nameMetric, int64(valueMetric))
-			default: //Если передано другое значение значение
+			default: //Если передано другое значение
 				log.Println("При вытягивание данных из БД оказалось что тип не gauge и не counter")
 			}
 		}

@@ -20,8 +20,9 @@ func SetapRouter() *chi.Mux {
 
 	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", PostAddValue) //Обновление по URL
 
-	r.Post("/value/", JSONValue)   //Обновлени через JSON
-	r.Post("/update/", JSONUpdate) //Обновлени через JSON
+	r.Post("/value/", JSONValue)             //Обновлени через JSON
+	r.Post("/update/", JSONUpdate)           //Обновлени через JSON
+	r.Post("/updates/", PostAddArrayMetrics) //Обновлени через JSON
 
 	r.Get("/value/{typeMetric}/{nameMetric}", GetReceivingMetric) //Получение по URL
 	r.Get("/ping", GetReceivingAllMetric)                         //Проверка подключения к БД
