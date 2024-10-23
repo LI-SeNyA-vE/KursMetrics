@@ -14,7 +14,7 @@ func main() {
 
 	//Запускает горутину на отправку файлов кажные N секунд
 	go func() {
-		funcAgent.SendingMetric(gaugeMetrics, counterMetrics, config.ConfigFlags.FlagPollInterval, config.ConfigFlags.FlagReportInterval, config.ConfigFlags.FlagAddressAndPort)
+		//funcAgent.SendingMetric(gaugeMetrics, counterMetrics, config.ConfigFlags.FlagPollInterval, config.ConfigFlags.FlagReportInterval, config.ConfigFlags.FlagAddressAndPort)
 		funcAgent.SendingBatchMetric(gaugeMetrics, counterMetrics, config.ConfigFlags.FlagPollInterval, config.ConfigFlags.FlagReportInterval, config.ConfigFlags.FlagAddressAndPort)
 	}()
 	select {}

@@ -151,6 +151,10 @@ func SendgBatchJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort
 		})
 	}
 
+	if metrics == nil {
+		return
+	}
+
 	jsonData, err := json.Marshal(metrics)
 	if err != nil {
 		log.Printf("Ошибка маршалинга метрик в JSON: %v", err)
@@ -185,6 +189,11 @@ func SendgBatchJSONMetricsCounter(mapMetric map[string]int64, flagAddressAndPort
 			Delta: &value,
 		})
 	}
+
+	if metrics == nil {
+		return
+	}
+
 	jsonData, err := json.Marshal(metrics)
 	if err != nil {
 		log.Printf("Ошибка маршалинга метрик в JSON: %v", err)
