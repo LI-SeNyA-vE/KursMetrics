@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"io"
 	"net/http"
 	"strconv"
@@ -14,6 +15,9 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var cfgFlags = config.VarServerFlag{}
+
+// PostAddValue Обрабатывает полный url запрос. Если всё правильно сохраняет метрику в память
 func PostAddValue(w http.ResponseWriter, r *http.Request) {
 	typeMetric := chi.URLParam(r, "typeMetric")
 	nameMetric := chi.URLParam(r, "nameMetric")
@@ -45,12 +49,15 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK) //Отправляет ответ что всё ОК
 }
 
+// GetReceivingMetric Позваляет получить знаачение метрики по данным: Тип метрики и Название метрики
 func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	nameMetric := chi.URLParam(r, "nameMetric")
 	typeMetric := chi.URLParam(r, "typeMetric")
+	logger.Log.Info("Запрос с " + nameMetric + " " + typeMetric)
 	value, err := storageMetric.StorageMetric.GetValue(typeMetric, nameMetric)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		logger.Log.Info("ошибка в GetReceivingMetric")
 		return
 	}
 	io.WriteString(w, fmt.Sprint(value))
@@ -87,6 +94,7 @@ func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 } */
 
+// GetReceivingAllMetric Возвращает страничку со всеми метриками
 func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 	body := `
         <!DOCTYPE html>
@@ -121,28 +129,31 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(body))
 }
 
+// JSONValue Запрашивает метрику через JSON формат
 func JSONValue(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	var metrics storageMetric.Metrics
 
-	_, err := buf.ReadFrom(r.Body)
+	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = json.Unmarshal(buf.Bytes(), &metrics)
+	err = json.Unmarshal(buf.Bytes(), &metrics) // Разбирает данные из массива byte в структуру "metrics"
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID)
+	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID) // Запрашивает метрику, по данным из JSON
 	if err != nil {
+		logger.Log.Info(err)
 		http.Error(w, "не найдено", http.StatusNotFound)
 		return
 	}
 
+	//Проверка на тип
 	switch metrics.MType {
 	case "counter":
 		v := metric.(int64)
@@ -152,7 +163,7 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 		metrics.Value = &v
 	}
 
-	resp, err := json.Marshal(metrics)
+	resp, err := json.Marshal(metrics) // Запаковывает/собирает данные в массив byte
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -163,35 +174,37 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// JSONUpdate Обновляет метрику через JSON запрос
 func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	var metrics storageMetric.Metrics
 	var buf bytes.Buffer
 
-	_, err := buf.ReadFrom(r.Body)
+	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = json.Unmarshal(buf.Bytes(), &metrics)
+	err = json.Unmarshal(buf.Bytes(), &metrics) // Разбирает данные из массива byte в структуру "metrics"
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
+	//Проверка на тип с последующим вызовом нужной функции
 	switch metrics.MType {
 	case "counter":
-		storageMetric.StorageMetric.UpdateCounter(metrics.ID, *metrics.Delta)
+		storageMetric.StorageMetric.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
 	case "gauge":
-		storageMetric.StorageMetric.UpdateGauge(metrics.ID, *metrics.Value)
+		storageMetric.StorageMetric.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
 	}
 
-	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID)
+	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID) // Запрашивает метрику, по данным из JSON
 	if err != nil {
 		http.Error(w, "не найдено", http.StatusNotFound)
 		return
 	}
 
+	//Проверка на тип
 	switch metrics.MType {
 	case "counter":
 		v := metric.(int64)
@@ -201,7 +214,7 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 		metrics.Value = &v
 	}
 
-	resp, err := json.Marshal(metrics)
+	resp, err := json.Marshal(metrics) // Запаковывает/собирает данные в массив byte
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -212,9 +225,9 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
+// Ping Кидает запрос в базу, для прорки её наличия
 func Ping(w http.ResponseWriter, r *http.Request) {
-
-	db, err := sql.Open("postgres", *config.FlagDatabaseDsn)
+	db, err := sql.Open("pgx", config.ConfigServerFlags.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -228,4 +241,32 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 
+}
+
+// PostAddArrayMetrics Хендлер, который позволяет принимать массив метрик и сохранять его
+func PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
+	var buf bytes.Buffer
+	var arrayMetrics []storageMetric.Metrics
+
+	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(buf.Bytes(), &arrayMetrics) // Разбирает данные из массива byte в массив структур "metrics"
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for _, metrics := range arrayMetrics {
+		switch metrics.MType {
+		case "counter":
+			storageMetric.StorageMetric.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+		case "gauge":
+			storageMetric.StorageMetric.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+		}
+	}
+	w.WriteHeader(http.StatusOK)
 }
