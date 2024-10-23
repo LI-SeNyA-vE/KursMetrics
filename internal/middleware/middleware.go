@@ -50,16 +50,21 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 func UnGzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Log.Info("Провалились в функцию UnGzipMiddleware")
 		if !(r.Header.Get("Accept-Encoding") == "gzip") {
+			logger.Log.Info("Accept-Encoding не равен gzip")
 			next.ServeHTTP(w, r)
 			return
 		}
+		logger.Log.Info("Accept-Encoding равен gzip")
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
+			logger.Log.Info("Ошибка при gzip.NewWriterLevel(w, gzip.BestSpeed)")
 			io.WriteString(w, err.Error())
 			return
 		}
 		defer gz.Close()
+		logger.Log.Info("Нет ошибки при gzip.NewWriterLevel(w, gzip.BestSpeed)")
 		w.Header().Set("Content-Encoding", "gzip")
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 
