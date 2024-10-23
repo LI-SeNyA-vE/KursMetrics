@@ -13,14 +13,14 @@ import (
 
 func main() {
 	//Иницаилизирует все конфиги и всё в этом духе
-	config.InitializeConfig()
+	config.InitializeServerConfig()
 
 	//Запускается функция, которая определит откуда выгружать данные
 	loadMetric.InitializeStorage()
 
 	//Создаёт горутину, для сохранения данных в файл
 	go func() {
-		saveMetric.SaveMetric(config.ConfigFlags.FlagFileStoragePath, config.ConfigFlags.FlagStoreInterval, config.ConfigFlags.FlagDatabaseDsn)
+		saveMetric.SaveMetric(config.ConfigServerFlags.FlagFileStoragePath, config.ConfigServerFlags.FlagStoreInterval, config.ConfigServerFlags.FlagDatabaseDsn)
 	}()
 
 	//Создаёт роутер
@@ -31,8 +31,8 @@ func main() {
 }
 
 func startServer(r *chi.Mux) {
-	logger.Log.Info("Открыт сервер ", config.ConfigFlags.FlagAddressAndPort)
-	err := http.ListenAndServe(config.ConfigFlags.FlagAddressAndPort, r)
+	logger.Log.Info("Открыт сервер ", config.ConfigServerFlags.FlagAddressAndPort)
+	err := http.ListenAndServe(config.ConfigServerFlags.FlagAddressAndPort, r)
 	if err != nil {
 		panic(err)
 	}

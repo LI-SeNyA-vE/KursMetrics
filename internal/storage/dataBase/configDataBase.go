@@ -10,7 +10,7 @@ import (
 
 // ConnectDB функция для проверки подключения к БД
 func ConnectDB() (*sql.DB, error) {
-	db, err := sql.Open("pgx", config.ConfigFlags.FlagDatabaseDsn)
+	db, err := sql.Open("pgx", config.ConfigServerFlags.FlagDatabaseDsn)
 	if err != nil {
 		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
 		return db, err
