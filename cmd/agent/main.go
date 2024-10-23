@@ -12,7 +12,7 @@ func main() {
 	//Вытаскиваем/обновляем метрики
 	gaugeMetrics, counterMetrics := funcAgent.UpdateMetric()
 
-	//Запускает горутину на отправку файлов кажные N секунд
+	//Запускает горутину на отправку файлов каждые N секунд
 	go func() {
 		//funcAgent.SendingMetric(gaugeMetrics, counterMetrics, config.ConfigFlags.FlagPollInterval, config.ConfigFlags.FlagReportInterval, config.ConfigFlags.FlagAddressAndPort)
 		funcAgent.SendingBatchMetric(gaugeMetrics, counterMetrics, config.ConfigFlags.FlagPollInterval, config.ConfigFlags.FlagReportInterval, config.ConfigFlags.FlagAddressAndPort)
