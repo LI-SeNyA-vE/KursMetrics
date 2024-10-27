@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/errorRetriable"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-resty/resty/v2"
 	"log"
@@ -138,6 +140,22 @@ func SendingBatchMetric(gaugeMetrics map[string]float64, counterMetrics map[stri
 	}
 }
 
+func sendMetrics(client *resty.Client, url string, compressedData []byte) (interface{}, error) {
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Encoding", "gzip").
+		SetHeader("Accept-Encoding", "gzip").
+		SetBody(compressedData).
+		Post(url)
+
+	// Если произошла ошибка или статус-код не 2xx, возвращаем ошибку
+	if err != nil || resp.StatusCode() >= 400 {
+		return nil, errors.New("ошибка при отправке метрик")
+	}
+
+	return resp, nil
+}
+
 func SendgBatchJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort string) {
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/updates/", flagAddressAndPort)
@@ -165,12 +183,10 @@ func SendgBatchJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort
 		log.Printf("Ошибка сжатия метрик: %v", err)
 	}
 
-	_, err = client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
-		SetHeader("Accept-Encoding", "gzip").
-		SetBody(compressedData).
-		Post(url)
+	_, err = errorRetriable.ErrorRetriableHTTP(func() (interface{}, error) {
+		return sendMetrics(client, url, compressedData)
+	})
+
 	if err != nil {
 		log.Printf("Не удалось отправить 'батч' метрик типа 'Gauge' с ошибкой: %v", err)
 	}
@@ -204,12 +220,10 @@ func SendgBatchJSONMetricsCounter(mapMetric map[string]int64, flagAddressAndPort
 		log.Printf("Ошибка сжатия метрик: %v", err)
 	}
 
-	_, err = client.R().
-		SetHeader("Content-Type", "application/json").
-		SetHeader("Content-Encoding", "gzip").
-		SetHeader("Accept-Encoding", "gzip").
-		SetBody(compressedData).
-		Post(url)
+	_, err = errorRetriable.ErrorRetriableHTTP(func() (interface{}, error) {
+		return sendMetrics(client, url, compressedData)
+	})
+
 	if err != nil {
 		log.Printf("Не удалось отправить 'батч' метрик типа 'Counter' с ошибкой: %v", err)
 	}

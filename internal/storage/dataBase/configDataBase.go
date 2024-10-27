@@ -3,6 +3,7 @@ package dataBase
 import (
 	"database/sql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/errorRetriable"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"log"
@@ -37,9 +38,18 @@ func CreateConfigSQL() string {
 }
 
 func LoadMetricFromDB() error {
-	db, err := ConnectDB()
+	results, err := errorRetriable.ErrorRetriable(ConnectDB)
+	var db *sql.DB
+	for _, result := range results {
+		switch v := result.(type) {
+		case *sql.DB:
+			db = v
+		case error:
+			err = v
+		}
+	}
 	if err != nil {
-		logger.Log.Infoln("Ош ибка связанная с ДБ: %v", err)
+		logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
 		return err
 	}
 	defer db.Close()
