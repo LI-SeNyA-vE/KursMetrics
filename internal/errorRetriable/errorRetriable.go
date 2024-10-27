@@ -2,6 +2,7 @@ package errorRetriable
 
 import (
 	"errors"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"reflect"
 	"time"
 )
@@ -37,7 +38,7 @@ func ErrorRetriable(inputFunc interface{}, args ...interface{}) ([]interface{}, 
 	for _, delay := range timeDelay {
 		// Выполняем вызов функции и ловим возможные ошибки
 		result = funcValue.Call(in)
-
+		logger.Log.Infof("Выполнена функция %s", inputFunc)
 		// Проверяем последний результат на наличие ошибки
 		if len(result) > 0 {
 			lastResult, ok := result[len(result)-1].Interface().(error)
