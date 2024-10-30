@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"net/http"
@@ -8,6 +9,9 @@ import (
 
 func SetapRouter() *chi.Mux {
 	r := chi.NewRouter()
+	r.Use(func(h http.Handler) http.Handler {
+		return middleware.HashSHA256(h, config.ConfigServerFlags.FlagKey)
+	})
 	r.Use(func(h http.Handler) http.Handler {
 		return middleware.LoggingMiddleware(h)
 	})

@@ -1,7 +1,11 @@
 package middleware
 
 import (
+	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"io"
 	"net/http"
@@ -100,4 +104,32 @@ func LoggingMiddleware(h http.Handler) http.Handler {
 		)
 	}
 	return http.HandlerFunc(logFn) // возвращаем функционально расширенный хендлер
+}
+
+func HashSHA256(next http.Handler, flagKey string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		receivedHash := r.Header.Get("HashSHA256")
+		if receivedHash != "" {
+			body, err := io.ReadAll(r.Body)
+			if err != nil {
+				http.Error(w, "Ошибка чтения тела запроса", http.StatusInternalServerError)
+				return
+			}
+
+			// Вычисляем хеш от тела запроса с использованием ключа
+			h := hmac.New(sha256.New, []byte(flagKey))
+			h.Write(body)
+
+			calculatedHash := hex.EncodeToString(h.Sum(nil))
+
+			if r.Header.Get("HashSHA256") != calculatedHash {
+				http.Error(w, "Неверный хеш", http.StatusBadRequest)
+				return
+			}
+
+			r.Body = io.NopCloser(bytes.NewBuffer(body))
+
+		}
+		next.ServeHTTP(w, r)
+	})
 }

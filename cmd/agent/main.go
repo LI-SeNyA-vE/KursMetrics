@@ -5,6 +5,8 @@ import (
 	funcAgent "github.com/LI-SeNyA-vE/KursMetrics/internal/funcAgent"
 )
 
+var ConfigAgent = &config.ConfigAgentFlags
+
 func main() {
 	//Инициализация конфига для Агента
 	config.InitializeAgentConfig()
@@ -15,7 +17,7 @@ func main() {
 	//Запускает горутину на отправку файлов каждые N секунд
 	go func() {
 		//funcAgent.SendingMetric(gaugeMetrics, counterMetrics, config.ConfigServerFlags.FlagPollInterval, config.ConfigServerFlags.FlagReportInterval, config.ConfigServerFlags.FlagAddressAndPort)
-		funcAgent.SendingBatchMetric(gaugeMetrics, counterMetrics, config.ConfigAgentFlags.FlagPollInterval, config.ConfigAgentFlags.FlagReportInterval, config.ConfigAgentFlags.FlagAddressAndPort)
+		funcAgent.SendingBatchMetric(gaugeMetrics, counterMetrics, ConfigAgent.FlagPollInterval, ConfigAgent.FlagReportInterval, ConfigAgent.FlagAddressAndPort, ConfigAgent.FlagKey)
 	}()
 	select {}
 
