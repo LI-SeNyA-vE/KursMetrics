@@ -89,7 +89,7 @@ func (c *ConfigAgent) InitializeAgentConfig() Agent {
 }
 
 func (c *ConfigAgent) newAgentFlag() Agent {
-	cfgAgentFlags := Agent{
+	c.Agent = Agent{
 		FlagAddressAndPort: "localhost:8080",
 		FlagReportInterval: 10,
 		FlagPollInterval:   2,
@@ -98,19 +98,19 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 	}
 
 	//Парсит переменные окружения для агента
-	err := env.Parse(&cfgAgentFlags)
+	err := env.Parse(&c.Agent)
 	if err != nil {
 		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
 	}
 
 	// Определение флагов
-	flag.StringVar(&cfgAgentFlags.FlagAddressAndPort, "a", cfgAgentFlags.FlagAddressAndPort, "Указываем адрес и порт по которому будем подключаться")
-	flag.Int64Var(&cfgAgentFlags.FlagReportInterval, "r", cfgAgentFlags.FlagReportInterval, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
-	flag.Int64Var(&cfgAgentFlags.FlagPollInterval, "p", cfgAgentFlags.FlagPollInterval, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
-	flag.StringVar(&cfgAgentFlags.FlagLogLevel, "l", cfgAgentFlags.FlagLogLevel, "Уровень логирования")
-	flag.StringVar(&cfgAgentFlags.FlagKey, "k", cfgAgentFlags.FlagKey, "Строка подключения к базе данных")
+	flag.StringVar(&c.Agent.FlagAddressAndPort, "a", c.Agent.FlagAddressAndPort, "Указываем адрес и порт по которому будем подключаться")
+	flag.Int64Var(&c.Agent.FlagReportInterval, "r", c.Agent.FlagReportInterval, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
+	flag.Int64Var(&c.Agent.FlagPollInterval, "p", c.Agent.FlagPollInterval, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
+	flag.StringVar(&c.Agent.FlagLogLevel, "l", c.Agent.FlagLogLevel, "Уровень логирования")
+	flag.StringVar(&c.Agent.FlagKey, "k", c.Agent.FlagKey, "Строка подключения к базе данных")
 	// Парсинг флагов
 	flag.Parse()
 
-	return cfgAgentFlags
+	return c.Agent
 }
