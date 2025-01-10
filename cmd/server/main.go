@@ -9,6 +9,7 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/saveMetric"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"net/http"
+	"time"
 )
 
 func main() {
@@ -27,10 +28,11 @@ func main() {
 		if err == nil {
 			break
 		}
+		time.Sleep(1 * time.Second)
 	}
 
 	//Если ошибка подключения к БД, берём значение из файла
-	if err != nil {
+	if err == nil {
 		err = metricStorage.LoadMetricFromFile(cfgServer.FlagFileStoragePath)
 		log.Info(err)
 	} else {
