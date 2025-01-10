@@ -2,164 +2,115 @@ package config
 
 import (
 	"flag"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	"github.com/caarlos0/env/v6"
 	_ "github.com/jackc/pgx/v4/stdlib"
-	"reflect"
+	"github.com/sirupsen/logrus"
 )
 
-// VarServerFlag содержит все флаги как обычные поля
-type VarServerFlag struct {
-	FlagAddressAndPort  string
-	FlagLogLevel        string
-	FlagStoreInterval   int64
-	FlagFileStoragePath string
-	FlagRestore         bool
-	FlagDatabaseDsn     string
-	FlagKey             string
+type ConfigServer struct {
+	log *logrus.Entry
+	Server
 }
 
-type VarServerEnv struct {
-	EnvAddress         string `env:"ADDRESS"`
-	EnvLogLevel        string `env:"LOG_LEVEL"`
-	EnvStoreInterval   int64  `env:"STORE_INTERVAL"`
-	EnvFileStoragePath string `env:"FILE_STORAGE_PATH"`
-	EnvRestore         bool   `env:"RESTORE"`
-	EnvDatabaseDsn     string `env:"DATABASE_DSN"`
-	EnvKey             string `env:"KEY"`
+type ConfigAgent struct {
+	log *logrus.Entry
+	Agent
 }
 
-type VarAgentFlag struct {
-	FlagAddressAndPort string
-	FlagReportInterval int64
-	FlagPollInterval   int64
-	FlagLogLevel       string
-	FlagKey            string
+type Server struct {
+	FlagAddressAndPort  string `env:"ADDRESS"`
+	FlagLogLevel        string `env:"LOG_LEVEL"`
+	FlagStoreInterval   int64  `env:"STORE_INTERVAL"`
+	FlagFileStoragePath string `env:"FILE_STORAGE_PATH"`
+	FlagRestore         bool   `env:"RESTORE"`
+	FlagDatabaseDsn     string `env:"DATABASE_DSN"`
+	FlagKey             string `env:"KEY"`
 }
 
-type VarAgentEnv struct {
-	EnvAddress        string `env:"ADDRESS"`
-	EnvReportInterval int64  `env:"REPORT_INTERVAL"`
-	EnvPollInterval   int64  `env:"POLL_INTERVAL"`
-	EnvLogLevel       string `env:"LOG_LEVEL"`
-	EnvKey            string `env:"KEY"`
+type Agent struct {
+	FlagAddressAndPort string `env:"ADDRESS"`
+	FlagReportInterval int64  `env:"REPORT_INTERVAL"`
+	FlagPollInterval   int64  `env:"POLL_INTERVAL"`
+	FlagLogLevel       string `env:"LOG_LEVEL"`
+	FlagKey            string `env:"KEY"`
 }
 
-// ConfigServerFlags глобальная переменная, содержащая все флаги
-var ConfigServerFlags VarServerFlag
-var ConfigAgentFlags VarAgentFlag
-
-func InitializeServerConfig() {
-	//Запускает улучшенный логер
-	err := logger.Initialize("info")
-	if err != nil {
-		panic("Не удалось инициализировать логгер")
+func NewConfigServer(log *logrus.Entry) *ConfigServer {
+	return &ConfigServer{
+		log:    log,
+		Server: Server{},
 	}
+}
 
+func NewConfigAgent(log *logrus.Entry) *ConfigAgent {
+	return &ConfigAgent{
+		log:   log,
+		Agent: Agent{},
+	}
+}
+
+func (c *ConfigServer) InitializeServerConfig() {
 	//Парсит флаги
-	ConfigServerFlags = NewVarServerFlag()
-
-	//Парсит переменные окружения для сервера
-	var cfgServerEnv VarServerEnv
-	err = env.Parse(&cfgServerEnv)
-	if err != nil {
-		logger.Log.Info("Ошибка на этапе парсинга переменных окружения", err)
-	}
-	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
-	parseServerEnv(cfgServerEnv, &ConfigServerFlags)
+	c.newVarServerFlag()
 }
 
-func InitializeAgentConfig() {
-	//Запускает улучшенный логер
-	err := logger.Initialize("info")
-	if err != nil {
-		panic("Не удалось инициализировать логгер")
+// newVarServerFlag инициализирует структуру VarServerFlag и парсит флаги командной строки
+func (c *ConfigServer) newVarServerFlag() {
+	c.Server = Server{
+		FlagAddressAndPort:  "localhost:8080",
+		FlagLogLevel:        "info",
+		FlagStoreInterval:   30,
+		FlagFileStoragePath: "C:\\Users\\Сеня\\Desktop\\KursMetrics\\cmd\\server\\metrics-db.json",
+		FlagRestore:         false,
+		FlagDatabaseDsn:     "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable",
+		FlagKey:             "",
 	}
 
-	//Парсит флаги
-	ConfigAgentFlags = NewVarAgentFlag()
+	err := env.Parse(&c.Server)
+	if err != nil {
+		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
+	}
+
+	// Определение флагов
+	flag.StringVar(&c.Server.FlagAddressAndPort, "a", c.Server.FlagAddressAndPort, "Указываем адрес и порт по которому будем подключаться")
+	flag.StringVar(&c.Server.FlagLogLevel, "l", c.Server.FlagLogLevel, "Уровень логирования")
+	flag.Int64Var(&c.Server.FlagStoreInterval, "i", c.Server.FlagStoreInterval, "Интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
+	flag.StringVar(&c.Server.FlagFileStoragePath, "f", c.Server.FlagFileStoragePath, "Полное имя файла, куда сохраняются текущие значения")
+	flag.BoolVar(&c.Server.FlagRestore, "r", c.Server.FlagRestore, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
+	flag.StringVar(&c.Server.FlagDatabaseDsn, "d", c.Server.FlagDatabaseDsn, "Строка подключения к базе данных")
+	flag.StringVar(&c.Server.FlagKey, "k", c.Server.FlagKey, "Строка подключения к базе данных")
+	// Парсинг флагов
+	flag.Parse()
+}
+
+func (c *ConfigAgent) InitializeAgentConfig() Agent {
+	//Парсит флаги и переменные окружения
+	return c.newAgentFlag()
+}
+
+func (c *ConfigAgent) newAgentFlag() Agent {
+	cfgAgentFlags := Agent{
+		FlagAddressAndPort: "localhost:8080",
+		FlagReportInterval: 10,
+		FlagPollInterval:   2,
+		FlagLogLevel:       "info",
+		FlagKey:            "",
+	}
 
 	//Парсит переменные окружения для агента
-	var cfgAgentEnv VarAgentEnv
-	err = env.Parse(&cfgAgentEnv)
+	err := env.Parse(&cfgAgentFlags)
 	if err != nil {
-		logger.Log.Info("Ошибка на этапе парсинга переменных окружения", err)
+		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
 	}
-	//Проверяет если переменные окружения не пустые, то берёт их за основные (в флаг присваивает значение перем. окруж.)
-	parseAgentEnv(cfgAgentEnv, &ConfigAgentFlags)
-}
-
-// NewVarServerFlag инициализирует структуру VarServerFlag и парсит флаги командной строки
-func NewVarServerFlag() VarServerFlag {
-	cfgServerFlags := &VarServerFlag{}
 
 	// Определение флагов
-	flag.StringVar(&cfgServerFlags.FlagAddressAndPort, "a", "localhost:8080", "Указываем адрес и порт по которому будем подключаться")
-	flag.StringVar(&cfgServerFlags.FlagLogLevel, "l", "info", "Уровень логирования")
-	flag.Int64Var(&cfgServerFlags.FlagStoreInterval, "i", 30, "Интервал времени в секундах, по истечении которого текущие показания сервера сохраняются на диск")
-	flag.StringVar(&cfgServerFlags.FlagFileStoragePath, "f", "C:\\Users\\Сеня\\Desktop\\KursMetrics\\cmd\\server\\metrics-db.json", "Полное имя файла, куда сохраняются текущие значения")
-	flag.BoolVar(&cfgServerFlags.FlagRestore, "r", false, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
-	flag.StringVar(&cfgServerFlags.FlagDatabaseDsn, "d", "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable", "Строка подключения к базе данных")
-	flag.StringVar(&cfgServerFlags.FlagKey, "k", "", "Строка подключения к базе данных")
+	flag.StringVar(&cfgAgentFlags.FlagAddressAndPort, "a", cfgAgentFlags.FlagAddressAndPort, "Указываем адрес и порт по которому будем подключаться")
+	flag.Int64Var(&cfgAgentFlags.FlagReportInterval, "r", cfgAgentFlags.FlagReportInterval, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
+	flag.Int64Var(&cfgAgentFlags.FlagPollInterval, "p", cfgAgentFlags.FlagPollInterval, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
+	flag.StringVar(&cfgAgentFlags.FlagLogLevel, "l", cfgAgentFlags.FlagLogLevel, "Уровень логирования")
+	flag.StringVar(&cfgAgentFlags.FlagKey, "k", cfgAgentFlags.FlagKey, "Строка подключения к базе данных")
 	// Парсинг флагов
 	flag.Parse()
 
-	return *cfgServerFlags
-}
-
-// parseServerEnv ты была рождена, что бы уменишить другую функцию
-// parseServerEnv обновляет флаги на основе переменных окружения
-func parseServerEnv(cfgServerEnv VarServerEnv, cfgServerFlags *VarServerFlag) {
-	checkForNil(cfgServerEnv.EnvAddress, &cfgServerFlags.FlagAddressAndPort)
-	checkForNil(cfgServerEnv.EnvLogLevel, &cfgServerFlags.FlagLogLevel)
-	checkForNil(cfgServerEnv.EnvStoreInterval, &cfgServerFlags.FlagStoreInterval)
-	checkForNil(cfgServerEnv.EnvFileStoragePath, &cfgServerFlags.FlagFileStoragePath)
-	checkForNil(cfgServerEnv.EnvRestore, &cfgServerFlags.FlagRestore)
-	checkForNil(cfgServerEnv.EnvDatabaseDsn, &cfgServerFlags.FlagDatabaseDsn)
-	checkForNil(cfgServerEnv.EnvKey, &cfgServerFlags.FlagKey)
-}
-
-func NewVarAgentFlag() VarAgentFlag {
-	cfgAgentFlags := &VarAgentFlag{}
-
-	// Определение флагов
-	flag.StringVar(&cfgAgentFlags.FlagAddressAndPort, "a", "localhost:8080", "Указываем адрес и порт по которому будем подключаться")
-	flag.Int64Var(&cfgAgentFlags.FlagReportInterval, "r", 10, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
-	flag.Int64Var(&cfgAgentFlags.FlagPollInterval, "p", 2, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
-	flag.StringVar(&cfgAgentFlags.FlagLogLevel, "l", "info", "Уровень логирования")
-	flag.StringVar(&cfgAgentFlags.FlagKey, "k", "", "Строка подключения к базе данных")
-	// Парсинг флагов
-	flag.Parse()
-
-	return *cfgAgentFlags
-}
-func parseAgentEnv(cfgAgentEnv VarAgentEnv, cfgAgentFlags *VarAgentFlag) {
-	checkForNil(cfgAgentEnv.EnvAddress, &cfgAgentFlags.FlagAddressAndPort)
-	checkForNil(cfgAgentEnv.EnvReportInterval, &cfgAgentFlags.FlagReportInterval)
-	checkForNil(cfgAgentEnv.EnvPollInterval, &cfgAgentFlags.FlagPollInterval)
-	checkForNil(cfgAgentEnv.EnvLogLevel, &cfgAgentFlags.FlagLogLevel)
-	checkForNil(cfgAgentEnv.EnvKey, &cfgAgentFlags.FlagKey)
-}
-
-// checkForNil проверяет значение и устанавливает его, если оно не нулевое
-func checkForNil(env interface{}, flag interface{}) {
-	envValue := reflect.ValueOf(env)
-	flagValue := reflect.ValueOf(flag)
-
-	// Проверяем, что flag является указателем
-	if flagValue.Kind() != reflect.Ptr {
-		logger.Log.Info("flag должен быть указателем")
-	}
-
-	// Получаем реальное значение переменной флага
-	flagElem := flagValue.Elem()
-
-	// Проверяем типы и обновляем флаг, если env не пустое
-	if !envValue.IsZero() {
-		if envValue.Type().AssignableTo(flagElem.Type()) {
-			flagElem.Set(envValue)
-		} else {
-			logger.Log.Infof("Невозможно присвоить тип %s к %s\n", envValue.Type(), flagElem.Type())
-		}
-	}
+	return cfgAgentFlags
 }

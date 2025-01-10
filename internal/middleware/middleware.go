@@ -6,32 +6,33 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"time"
 )
+
+type Middleware struct {
+	log *logrus.Entry
+	config.Server
+}
+
+func NewMiddleware(log *logrus.Entry, cfg config.Server) *Middleware {
+	return &Middleware{
+		log:    log,
+		Server: cfg,
+	}
+}
 
 type (
 	gzipWriter struct {
 		http.ResponseWriter
 		Writer io.Writer
 	}
-
-	// берём структуру для хранения сведений об ответе
-	responseData struct {
-		status int
-		uri    string
-	}
-
-	// добавляем реализацию http.ResponseWriter
-	loggingResponseWriter struct {
-		http.ResponseWriter // встраиваем оригинальный http.ResponseWriter
-		responseData        *responseData
-	}
 )
 
-func GzipMiddleware(next http.Handler) http.Handler {
+func (m *Middleware) GzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Encoding") == "gzip" {
 			gz, err := gzip.NewReader(r.Body)
@@ -52,35 +53,49 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 	return w.Writer.Write(b)
 }
 
-func UnGzipMiddleware(next http.Handler) http.Handler {
+func (m *Middleware) UnGzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Log.Info("Провалились в функцию UnGzipMiddleware")
+		m.log.Info("Провалились в функцию UnGzipMiddleware")
 		if !(r.Header.Get("Accept-Encoding") == "gzip") {
-			logger.Log.Info("Accept-Encoding не равен gzip")
+			m.log.Info("Accept-Encoding не равен gzip")
 			next.ServeHTTP(w, r)
 			return
 		}
-		logger.Log.Info("Accept-Encoding равен gzip")
+		m.log.Info("Accept-Encoding равен gzip")
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
-			logger.Log.Info("Ошибка при gzip.NewWriterLevel(w, gzip.BestSpeed)")
+			m.log.Info("Ошибка при gzip.NewWriterLevel(w, gzip.BestSpeed)")
 			io.WriteString(w, err.Error())
 			return
 		}
 		defer gz.Close()
-		logger.Log.Info("Нет ошибки при gzip.NewWriterLevel(w, gzip.BestSpeed)")
+		m.log.Info("Нет ошибки при gzip.NewWriterLevel(w, gzip.BestSpeed)")
 		w.Header().Set("Content-Encoding", "gzip")
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 
 	})
 }
 
+type (
+	// берём структуру для хранения сведений об ответе
+	responseData struct {
+		status int
+		uri    string
+	}
+
+	// добавляем реализацию http.ResponseWriter
+	loggingResponseWriter struct {
+		http.ResponseWriter // встраиваем оригинальный http.ResponseWriter
+		responseData        *responseData
+	}
+)
+
 func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.ResponseWriter.WriteHeader(statusCode)
 	r.responseData.status = statusCode
 }
 
-func LoggingMiddleware(h http.Handler) http.Handler {
+func (m *Middleware) LoggingMiddleware(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now() // функция Now() возвращает текущее время
 		responseData := &responseData{
@@ -95,9 +110,8 @@ func LoggingMiddleware(h http.Handler) http.Handler {
 		h.ServeHTTP(&lw, r)           // обслуживание оригинального запроса
 		duration := time.Since(start) // Since возвращает разницу во времени между start
 
-		logger.Log.Infoln(
+		m.log.Info(
 			"uri:", r.RequestURI,
-			"method:", r.Method,
 			"status:", responseData.status, // получаем перехваченный код статуса ответа
 			"duration:", duration,
 			"size:", len(responseData.uri), // получаем перехваченный размер ответа
@@ -106,8 +120,8 @@ func LoggingMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(logFn) // возвращаем функционально расширенный хендлер
 }
 
-func HashSHA256(next http.Handler, flagKey string) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func (m *Middleware) HashSHA256(h http.Handler) http.Handler {
+	hashFn := func(w http.ResponseWriter, r *http.Request) {
 		receivedHash := r.Header.Get("HashSHA256")
 		if receivedHash != "" {
 			body, err := io.ReadAll(r.Body)
@@ -117,7 +131,7 @@ func HashSHA256(next http.Handler, flagKey string) http.Handler {
 			}
 
 			// Вычисляем хеш от тела запроса с использованием ключа
-			h := hmac.New(sha256.New, []byte(flagKey))
+			h := hmac.New(sha256.New, []byte(m.FlagKey))
 			h.Write(body)
 
 			calculatedHash := hex.EncodeToString(h.Sum(nil))
@@ -130,6 +144,7 @@ func HashSHA256(next http.Handler, flagKey string) http.Handler {
 			r.Body = io.NopCloser(bytes.NewBuffer(body))
 
 		}
-		next.ServeHTTP(w, r)
-	})
+		h.ServeHTTP(w, r)
+	}
+	return http.HandlerFunc(hashFn)
 }

@@ -1,44 +1,85 @@
 package logger
 
 import (
-	"time"
-
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"fmt"
+	"github.com/sirupsen/logrus"
+	"io"
+	"os"
+	"path"
+	"runtime"
 )
 
-var Log *zap.SugaredLogger
-
-func customTimeEncoder(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-	enc.AppendString(t.Format("2006-01-02 15:04:05"))
+type writerHook struct {
+	Writer    []io.Writer
+	LogLevels []logrus.Level
 }
 
-func getCustomLoggerConfig(level string) (*zap.Logger, error) {
-	lvl, err := zap.ParseAtomicLevel(level)
-	if err != nil {
-		return nil, err
-	}
-	encoderConfig := zap.NewProductionEncoderConfig()
-	encoderConfig.EncodeTime = customTimeEncoder
-	encoderConfig.TimeKey = "time"
-
-	config := zap.Config{
-		Level:            lvl,
-		Development:      false,
-		Encoding:         "json",
-		EncoderConfig:    encoderConfig,
-		OutputPaths:      []string{"stdout"},
-		ErrorOutputPaths: []string{"stderr"},
-	}
-
-	return config.Build()
-}
-
-func Initialize(level string) error {
-	logger, err := getCustomLoggerConfig(level)
+func (hook *writerHook) Fire(entry *logrus.Entry) error {
+	line, err := entry.String()
 	if err != nil {
 		return err
 	}
-	Log = logger.Sugar() // Преобразуем в SugaredLogger для удобства
-	return nil
+	for _, w := range hook.Writer {
+		w.Write([]byte(line))
+	}
+	return err
+}
+
+func (hook *writerHook) Levels() []logrus.Level {
+	return hook.LogLevels
+}
+
+func NewLogger() *logrus.Entry {
+	l := logrus.New()
+	l.SetReportCaller(true)
+	l.Formatter = &logrus.TextFormatter{
+		CallerPrettyfier: func(frame *runtime.Frame) (function string, file string) {
+			filename := path.Base(frame.File)
+			return fmt.Sprintf("%s()", frame.Function), fmt.Sprintf("%s:%d", filename, frame.Line)
+		},
+		DisableColors: false,
+		FullTimestamp: true,
+	}
+
+	err := os.MkdirAll("logs", 0755)
+	if err != nil {
+		panic(err)
+	}
+
+	readDir, err := os.ReadDir("logs")
+	if err != nil {
+		panic(err)
+	}
+
+	var existFile bool
+	for _, entry := range readDir {
+		if entry.Name() == "all.log" {
+			existFile = true
+			break
+		}
+		existFile = false
+	}
+
+	if !existFile {
+		_, err = os.Create("logs/all.log")
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	allFile, err := os.OpenFile("logs/all.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0640)
+	if err != nil {
+		panic(err)
+	}
+
+	l.SetOutput(io.Discard)
+
+	l.AddHook(&writerHook{
+		Writer:    []io.Writer{allFile, os.Stdout},
+		LogLevels: logrus.AllLevels,
+	})
+
+	l.SetLevel(logrus.TraceLevel)
+
+	return logrus.NewEntry(l)
 }

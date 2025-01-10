@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
+	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"strconv"
@@ -15,10 +15,20 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var cfgFlags = config.VarServerFlag{}
+type Handler struct {
+	log *logrus.Entry
+	config.Server
+}
+
+func NewHandler(log *logrus.Entry, cfg config.Server) *Handler {
+	return &Handler{
+		log:    log,
+		Server: cfg,
+	}
+}
 
 // PostAddValue Обрабатывает полный url запрос. Если всё правильно сохраняет метрику в память
-func PostAddValue(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostAddValue(w http.ResponseWriter, r *http.Request) {
 	typeMetric := chi.URLParam(r, "typeMetric")
 	nameMetric := chi.URLParam(r, "nameMetric")
 	countMetric := chi.URLParam(r, "countMetric")
@@ -50,14 +60,14 @@ func PostAddValue(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetReceivingMetric Позваляет получить знаачение метрики по данным: Тип метрики и Название метрики
-func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	nameMetric := chi.URLParam(r, "nameMetric")
 	typeMetric := chi.URLParam(r, "typeMetric")
-	logger.Log.Info("Запрос с " + nameMetric + " " + typeMetric)
+	h.log.Info("Запрос с " + nameMetric + " " + typeMetric)
 	value, err := storageMetric.StorageMetric.GetValue(typeMetric, nameMetric)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
-		logger.Log.Info("ошибка в GetReceivingMetric")
+		h.log.Info("ошибка в GetReceivingMetric")
 		return
 	}
 	io.WriteString(w, fmt.Sprint(value))
@@ -65,37 +75,8 @@ func GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-/* func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
-	gauges := storageMetric.Metric.GetAllGauges()
-	counters := storageMetric.Metric.GetAllCounters()
-
-	data := storageMetric.MetricStorage{
-		Gauge:   gauges,
-		Counter: counters,
-	}
-
-	tmplPath := filepath.Join("..", "..", "internal", "templates", "index.html")
-
-	tmpl, err := template.ParseFiles(tmplPath)
-	if err != nil {
-		logger.Log.Info("Ошибка 1 " + err.Error())
-		http.Error(w, fmt.Sprintf("Error parsing template: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	err = tmpl.Execute(w, data)
-	if err != nil {
-		logger.Log.Info("Ошибка 2 " + err.Error())
-		http.Error(w, fmt.Sprintf("Error executing template: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-} */
-
 // GetReceivingAllMetric Возвращает страничку со всеми метриками
-func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 	body := `
         <!DOCTYPE html>
         <html>
@@ -130,7 +111,7 @@ func GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) {
 }
 
 // JSONValue Запрашивает метрику через JSON формат
-func JSONValue(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	var metrics storageMetric.Metrics
 
@@ -148,7 +129,7 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 
 	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID) // Запрашивает метрику, по данным из JSON
 	if err != nil {
-		logger.Log.Info(err)
+		h.log.Info(err)
 		http.Error(w, "не найдено", http.StatusNotFound)
 		return
 	}
@@ -175,7 +156,7 @@ func JSONValue(w http.ResponseWriter, r *http.Request) {
 }
 
 // JSONUpdate Обновляет метрику через JSON запрос
-func JSONUpdate(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	var metrics storageMetric.Metrics
 	var buf bytes.Buffer
 
@@ -226,8 +207,8 @@ func JSONUpdate(w http.ResponseWriter, r *http.Request) {
 }
 
 // Ping Кидает запрос в базу, для прорки её наличия
-func Ping(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("pgx", config.ConfigServerFlags.FlagDatabaseDsn)
+func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
+	db, err := sql.Open("pgx", h.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -244,7 +225,7 @@ func Ping(w http.ResponseWriter, r *http.Request) {
 }
 
 // PostAddArrayMetrics Хендлер, который позволяет принимать массив метрик и сохранять его
-func PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	var arrayMetrics []storageMetric.Metrics
 

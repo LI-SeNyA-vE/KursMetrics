@@ -3,63 +3,59 @@ package dataBase
 import (
 	"database/sql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/errorRetriable"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
+	"github.com/sirupsen/logrus"
 	"log"
 )
 
-// ConnectDB функция для проверки подключения к БД
-func ConnectDB() (*sql.DB, error) {
-	db, err := sql.Open("pgx", config.ConfigServerFlags.FlagDatabaseDsn)
-	if err != nil {
-		logger.Log.Infoln("Ошибка подключения к базе данных: %v", err)
-		return db, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		logger.Log.Infoln("Не удалось установить соединение с базой данных: %v", err)
-		return db, err
-	}
-
-	return db, nil
+type DataBase struct {
+	log *logrus.Entry
+	config.Server
+	*sql.DB
 }
 
-func CreateConfigSQL() string {
-	var createTableSQL = `
-  CREATE TABLE IF NOT EXISTS metric (
-      "id" TEXT NOT NULL,
-      "type" TEXT NOT NULL,
-      "value" DOUBLE PRECISION NULL,
-      PRIMARY KEY ("id", "type")
-  );`
-	return createTableSQL
+func NewConnectDB(log *logrus.Entry, cfg config.Server) *DataBase {
+	return &DataBase{
+		log:    log,
+		Server: cfg,
+		DB:     nil,
+	}
 }
 
-func LoadMetricFromDB() error {
-	results, err := errorRetriable.ErrorRetriable(ConnectDB)
-	var db *sql.DB
-	for _, result := range results {
-		switch v := result.(type) {
-		case *sql.DB:
-			db = v
-		case error:
-			err = v
-		}
-	}
+func (d *DataBase) CrereateDB(createTableSQL string) {
+	_, err := d.DB.Exec(createTableSQL)
 	if err != nil {
-		logger.Log.Infoln("Ошибка связанная с ДБ: %v", err)
+		d.log.Infof("Ошибка при создании таблицы: %v", err)
+
+		return
+	}
+	d.log.Info("Таблица 'Metric' успешно создана или уже была.")
+}
+
+// ConnectDB функция для подключения к БД
+func (d *DataBase) ConnectDB() (err error) {
+	d.DB, err = sql.Open("pgx", d.FlagDatabaseDsn)
+	if err != nil {
+		d.log.Info("Ошибка подключения к базе данных: %v", err)
 		return err
 	}
-	defer db.Close()
+
+	err = d.DB.Ping()
+	if err != nil {
+		d.log.Info("Не удалось установить соединение с базой данных: %v", err)
+		return err
+	}
 
 	configCreateSQL := CreateConfigSQL()
-	CrereateDB(db, configCreateSQL)
+	d.CrereateDB(configCreateSQL)
 
-	rows, err := db.Query("SELECT Id, Type, Name, Value FROM metric")
+	return nil
+}
+
+func (d *DataBase) LoadMetricFromDB() (err error) {
+	rows, err := d.DB.Query("SELECT Id, Type, Name, Value FROM metric")
 	if err != nil {
-		logger.Log.Infoln("Ошибка получения данных из базы данных: %v", err)
+		d.log.Info("Ошибка получения данных из базы данных: %v", err)
 		return err
 	} else {
 		for rows.Next() {
@@ -69,9 +65,9 @@ func LoadMetricFromDB() error {
 			var nameMetric string
 			var valueMetric float64
 			//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
-			err := rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
+			err = rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
 			if err != nil {
-				logger.Log.Infoln("Ошибка сканирования строки: %v", err)
+				d.log.Info("Ошибка сканирования строки: %v", err)
 			}
 			defer rows.Close()
 
@@ -86,4 +82,16 @@ func LoadMetricFromDB() error {
 		}
 		return err
 	}
+}
+
+func CreateConfigSQL() string {
+	var createTableSQL = `
+  CREATE TABLE IF NOT EXISTS metric (
+      "id" TEXT NOT NULL,
+      "type" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "value" DOUBLE PRECISION NULL,
+      PRIMARY KEY ("id", "type")
+  );`
+	return createTableSQL
 }

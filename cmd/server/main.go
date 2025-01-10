@@ -4,37 +4,55 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/loadMetric"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/dataBase"
+	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/saveMetric"
-	"github.com/go-chi/chi/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"net/http"
 )
 
 func main() {
-	//Иницаилизирует все конфиги и всё в этом духе
-	config.InitializeServerConfig()
+	var err error
+	//Инициализация логера
+	log := logger.NewLogger()
 
-	//Запускается функция, которая определит откуда выгружать данные
-	loadMetric.InitializeStorage()
+	//Иницаилизирует все конфиги и всё в этом духе
+	cfgServer := config.NewConfigServer(log)
+	cfgServer.InitializeServerConfig()
+
+	//Подключение к БД
+	db := dataBase.NewConnectDB(log, cfgServer.Server)
+	for i := 0; i < 3; i++ {
+		err = db.ConnectDB()
+		if err == nil {
+			break
+		}
+	}
+
+	//Если ошибка подключения к БД, берём значение из файла
+	if err != nil {
+		err = metricStorage.LoadMetricFromFile(cfgServer.FlagFileStoragePath)
+		log.Info(err)
+	} else {
+		err = db.LoadMetricFromDB()
+		if err != nil {
+			return
+		}
+	}
 
 	//Создаёт горутину, для сохранения данных в файл
 	go func() {
-		saveMetric.SaveMetric(config.ConfigServerFlags.FlagFileStoragePath, config.ConfigServerFlags.FlagStoreInterval, config.ConfigServerFlags.FlagDatabaseDsn)
+		saveMetric.SaveMetric(cfgServer.FlagFileStoragePath, cfgServer.FlagStoreInterval)
 	}()
 
 	//Создаёт роутер
-	r := handlers.SetapRouter()
+	r := handlers.NewRouter(log, cfgServer.Server)
+	r.SetupRouter()
 
 	//Старт сервера
-	startServer(r)
-}
-
-func startServer(r *chi.Mux) {
-	logger.Log.Info("Открыт сервер ", config.ConfigServerFlags.FlagAddressAndPort)
-	err := http.ListenAndServe(config.ConfigServerFlags.FlagAddressAndPort, r)
+	log.Info("Открыт сервер ", cfgServer.FlagAddressAndPort)
+	err = http.ListenAndServe(cfgServer.FlagAddressAndPort, r.Mux)
 	if err != nil {
 		panic(err)
 	}
-
 }

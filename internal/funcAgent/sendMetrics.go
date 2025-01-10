@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/errorRetriable"
 	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-resty/resty/v2"
@@ -110,9 +111,9 @@ import (
 //	}
 //}
 
-func SendingBatchMetric(gaugeMetrics map[string]float64, counterMetrics map[string]int64, flagPollInterval int64, flagReportInterval int64, flagAddressAndPort string, flagKey string) {
-	ticker1 := time.NewTicker(time.Duration(flagPollInterval) * time.Second)
-	ticker2 := time.NewTicker(time.Duration(flagReportInterval) * time.Second)
+func SendingBatchMetric(gaugeMetrics map[string]float64, counterMetrics map[string]int64, cfg config.Agent) {
+	ticker1 := time.NewTicker(time.Duration(cfg.FlagPollInterval) * time.Second)
+	ticker2 := time.NewTicker(time.Duration(cfg.FlagReportInterval) * time.Second)
 	defer ticker1.Stop()
 	defer ticker2.Stop()
 
@@ -120,11 +121,11 @@ func SendingBatchMetric(gaugeMetrics map[string]float64, counterMetrics map[stri
 		select {
 		case <-ticker1.C:
 			gaugeMetrics, counterMetrics = UpdateMetric()
-			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", flagPollInterval)
+			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", cfg.FlagPollInterval)
 		case <-ticker2.C:
-			SendgBatchJSONMetricsGauge(gaugeMetrics, flagAddressAndPort, flagKey)
-			SendgBatchJSONMetricsCounter(counterMetrics, flagAddressAndPort, flagKey)
-			fmt.Printf("Пауза в %d секунд между отправкой 'батчей' метрик на сервер\n", flagReportInterval)
+			SendgBatchJSONMetricsGauge(gaugeMetrics, cfg.FlagAddressAndPort, cfg.FlagKey)
+			SendgBatchJSONMetricsCounter(counterMetrics, cfg.FlagAddressAndPort, cfg.FlagKey)
+			fmt.Printf("Пауза в %d секунд между отправкой 'батчей' метрик на сервер\n", cfg.FlagReportInterval)
 		}
 	}
 }

@@ -4,33 +4,41 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware"
 	"github.com/go-chi/chi/v5"
-	"net/http"
+	"github.com/sirupsen/logrus"
 )
 
-func SetapRouter() *chi.Mux {
-	r := chi.NewRouter()
-	r.Use(func(h http.Handler) http.Handler {
-		return middleware.HashSHA256(h, config.ConfigServerFlags.FlagKey)
-	})
-	r.Use(func(h http.Handler) http.Handler {
-		return middleware.LoggingMiddleware(h)
-	})
-	r.Use(func(h http.Handler) http.Handler {
-		return middleware.GzipMiddleware(h)
-	})
-	r.Use(func(h http.Handler) http.Handler {
-		return middleware.UnGzipMiddleware(h)
-	})
+type Router struct {
+	log *logrus.Entry
+	config.Server
+	*chi.Mux
+}
 
-	r.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", PostAddValue) //Обновление по URL
+func NewRouter(log *logrus.Entry, cfg config.Server) *Router {
+	return &Router{
+		log:    log,
+		Server: cfg,
+		Mux:    nil,
+	}
+}
 
-	r.Post("/value/", JSONValue)             //Получение через JSON
-	r.Post("/update/", JSONUpdate)           //Обновление через JSON
-	r.Post("/updates/", PostAddArrayMetrics) //Обновление "батчем" через JSON
+func (rout *Router) SetupRouter() {
+	rout.Mux = chi.NewRouter()
+	mw := middleware.NewMiddleware(rout.log, rout.Server)
+	hl := NewHandler(rout.log, rout.Server)
 
-	r.Get("/value/{typeMetric}/{nameMetric}", GetReceivingMetric) //Получение по URL
-	r.Get("/ping", GetReceivingAllMetric)                         //Проверка подключения к БД
-	r.Get("/", GetReceivingAllMetric)                             //Получение по JSON
-	r.Get("/ping", Ping)
-	return r
+	rout.Mux.Use(mw.HashSHA256)
+	rout.Mux.Use(mw.LoggingMiddleware)
+	rout.Mux.Use(mw.GzipMiddleware)
+	rout.Mux.Use(mw.UnGzipMiddleware)
+
+	rout.Mux.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", hl.PostAddValue) //Обновление по URL
+
+	rout.Mux.Post("/value/", hl.JSONValue)             //Получение через JSON
+	rout.Mux.Post("/update/", hl.JSONUpdate)           //Обновление через JSON
+	rout.Mux.Post("/updates/", hl.PostAddArrayMetrics) //Обновление "батчем" через JSON
+
+	rout.Mux.Get("/value/{typeMetric}/{nameMetric}", hl.GetReceivingMetric) //Получение по URL
+	rout.Mux.Get("/ping", hl.GetReceivingAllMetric)                         //Проверка подключения к БД
+	rout.Mux.Get("/", hl.GetReceivingAllMetric)                             //Получение по JSON
+	rout.Mux.Get("/ping", hl.Ping)
 }
