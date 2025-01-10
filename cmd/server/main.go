@@ -38,7 +38,7 @@ func main() {
 	} else {
 		err = db.LoadMetricFromDB()
 		if err != nil {
-			return
+			log.Info(err)
 		}
 	}
 
