@@ -36,7 +36,7 @@ func (d *DataBase) CrereateDB(createTableSQL string) {
 func (d *DataBase) ConnectDB() (err error) {
 	d.DB, err = sql.Open("pgx", d.FlagDatabaseDsn)
 	if err != nil {
-		d.log.Info("Ошибка подключения к базе данных: %v", err)
+		d.log.Infof("Ошибка подключения к базе данных: %v", err)
 		return err
 	}
 

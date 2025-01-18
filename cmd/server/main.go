@@ -32,7 +32,7 @@ func main() {
 	}
 
 	//Если ошибка подключения к БД, берём значение из файла
-	if err == nil {
+	if err != nil {
 		err = metricStorage.LoadMetricFromFile(cfgServer.FlagFileStoragePath)
 		log.Info(err)
 	} else {

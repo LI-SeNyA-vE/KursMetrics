@@ -15,7 +15,7 @@ func SaveMetricToFile(cdFile string) {
 
 	data, err := json.Marshal(allMetrics)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
 	}
 
 	dir := filepath.Dir(cdFile)
