@@ -42,7 +42,7 @@ func (d *DataBase) ConnectDB() (err error) {
 
 	err = d.DB.Ping()
 	if err != nil {
-		d.log.Info("Не удалось установить соединение с базой данных: %v", err)
+		d.log.Infof("Не удалось установить соединение с базой данных: %v", err)
 		return err
 	}
 
@@ -55,7 +55,7 @@ func (d *DataBase) ConnectDB() (err error) {
 func (d *DataBase) LoadMetricFromDB() (err error) {
 	rows, err := d.DB.Query("SELECT Id, Type, Name, Value FROM metric")
 	if err != nil {
-		d.log.Info("Ошибка получения данных из базы данных: %v", err)
+		d.log.Infof("Ошибка получения данных из базы данных: %v", err)
 		return err
 	} else {
 		for rows.Next() {
@@ -67,7 +67,7 @@ func (d *DataBase) LoadMetricFromDB() (err error) {
 			//err := rows.Scan(&metric.Id, &metric.Type, &metric.Name, &metric.Value)
 			err = rows.Scan(idMetric, typeMetric, nameMetric, valueMetric)
 			if err != nil {
-				d.log.Info("Ошибка сканирования строки: %v", err)
+				d.log.Infof("Ошибка сканирования строки: %v", err)
 			}
 			defer rows.Close()
 
