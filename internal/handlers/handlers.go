@@ -158,6 +158,9 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "не найдено", http.StatusNotFound)
 			return
 		}
+	default:
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	resp, err := json.Marshal(metrics) // Запаковывает/собирает данные в массив byte
@@ -189,19 +192,15 @@ func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 	//Проверка на тип с последующим вызовом нужной функции
 	switch metrics.MType {
-	case "counter":
-
-	case "gauge":
-
-	}
-
-	switch metrics.MType {
 	case "gauge":
 		metric := h.storage.UpdateGauge(metrics.ID, metrics.Value) //Обновляет метрику
 		metrics.Value = metric
 	case "counter":
 		metric := h.storage.UpdateCounter(metrics.ID, metrics.Delta) //Обновляет метрику
 		metrics.Delta = metric
+	default:
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	resp, err := json.Marshal(metrics) // Запаковывает/собирает данные в массив byte
