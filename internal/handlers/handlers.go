@@ -16,14 +16,16 @@ import (
 )
 
 type Handler struct {
-	log *logrus.Entry
-	config.Server
+	log     *logrus.Entry
+	cfg     config.Server
+	storage storageMetric.MetricsStorage
 }
 
-func NewHandler(log *logrus.Entry, cfg config.Server) *Handler {
+func NewHandler(log *logrus.Entry, cfg config.Server, storage storageMetric.MetricsStorage) *Handler {
 	return &Handler{
-		log:    log,
-		Server: cfg,
+		log:     log,
+		cfg:     cfg,
+		storage: storage,
 	}
 }
 
@@ -39,7 +41,7 @@ func (h *Handler) PostAddValue(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "Это не Float", http.StatusBadRequest) //Вывод error-ки
 			return                                               //
 		}
-		storageMetric.StorageMetric.UpdateGauge(nameMetric, count)
+		h.storage.UpdateGauge(nameMetric, count)
 	case "counter": //Если передано значение 'counter'
 		{
 			count, err := strconv.ParseInt(countMetric, 10, 64) //Проверка что переданно число и его можно перевети в int64
@@ -47,7 +49,7 @@ func (h *Handler) PostAddValue(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "Это не Float", http.StatusBadRequest) //Вывод error-ки
 				return                                               //
 			}
-			storageMetric.StorageMetric.UpdateCounter(nameMetric, count)
+			h.storage.UpdateCounter(nameMetric, count)
 		}
 	default: //Если передано другое значение значение
 		{
@@ -64,15 +66,29 @@ func (h *Handler) GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	nameMetric := chi.URLParam(r, "nameMetric")
 	typeMetric := chi.URLParam(r, "typeMetric")
 	h.log.Info("Запрос с " + nameMetric + " " + typeMetric)
-	value, err := storageMetric.StorageMetric.GetValue(typeMetric, nameMetric)
-	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
-		h.log.Info("ошибка в GetReceivingMetric")
-		return
+
+	switch typeMetric {
+	case "gauge":
+		gauge, err := h.storage.GetGauge(nameMetric) // Запрашивает метрику, по данным из JSON
+		if err != nil {
+			h.log.Info("ошибка в GetReceivingMetric")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		io.WriteString(w, fmt.Sprint(gauge))
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
+	case "counter":
+		counter, err := h.storage.GetCounter(nameMetric) // Запрашивает метрику, по данным из JSON
+		if err != nil {
+			h.log.Info("ошибка в GetReceivingMetric")
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		io.WriteString(w, fmt.Sprint(counter))
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusOK)
 	}
-	io.WriteString(w, fmt.Sprint(value))
-	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusOK)
 }
 
 // GetReceivingAllMetric Возвращает страничку со всеми метриками
@@ -90,13 +106,13 @@ func (h *Handler) GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) 
                     <td>Value</td>
                 </tr>
     `
-	listC := storageMetric.StorageMetric.GetAllCounters()
+	listC := h.storage.GetAllCounters()
 	for k, v := range listC {
 		body = body + fmt.Sprintf("<tr>\n<td>%s</td>\n", k)
 		body = body + fmt.Sprintf("<td>%v</td>\n</tr>\n", v)
 	}
 
-	listG := storageMetric.StorageMetric.GetAllGauges()
+	listG := h.storage.GetAllGauges()
 	for k, v := range listG {
 		body = body + fmt.Sprintf("<tr>\n<td>%s</td>\n", k)
 		body = body + fmt.Sprintf("<td>%v</td>\n</tr>\n", v)
@@ -127,21 +143,21 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID) // Запрашивает метрику, по данным из JSON
-	if err != nil {
-		h.log.Info(err)
-		http.Error(w, "не найдено", http.StatusNotFound)
-		return
-	}
-
-	//Проверка на тип
 	switch metrics.MType {
-	case "counter":
-		v := metric.(int64)
-		metrics.Delta = &v
 	case "gauge":
-		v := metric.(float64)
-		metrics.Value = &v
+		metrics.Value, err = h.storage.GetGauge(metrics.ID) // Запрашивает метрику, по данным из JSON
+		if err != nil {
+			h.log.Info(err)
+			http.Error(w, "не найдено", http.StatusNotFound)
+			return
+		}
+	case "counter":
+		metrics.Delta, err = h.storage.GetCounter(metrics.ID) // Запрашивает метрику, по данным из JSON
+		if err != nil {
+			h.log.Info(err)
+			http.Error(w, "не найдено", http.StatusNotFound)
+			return
+		}
 	}
 
 	resp, err := json.Marshal(metrics) // Запаковывает/собирает данные в массив byte
@@ -174,25 +190,18 @@ func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	//Проверка на тип с последующим вызовом нужной функции
 	switch metrics.MType {
 	case "counter":
-		storageMetric.StorageMetric.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+
 	case "gauge":
-		storageMetric.StorageMetric.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+
 	}
 
-	metric, err := storageMetric.StorageMetric.GetValue(metrics.MType, metrics.ID) // Запрашивает метрику, по данным из JSON
-	if err != nil {
-		http.Error(w, "не найдено", http.StatusNotFound)
-		return
-	}
-
-	//Проверка на тип
 	switch metrics.MType {
-	case "counter":
-		v := metric.(int64)
-		metrics.Delta = &v
 	case "gauge":
-		v := metric.(float64)
-		metrics.Value = &v
+		metric := h.storage.UpdateGauge(metrics.ID, metrics.Value) //Обновляет метрику
+		metrics.Value = metric
+	case "counter":
+		metric := h.storage.UpdateCounter(metrics.ID, metrics.Delta) //Обновляет метрику
+		metrics.Delta = metric
 	}
 
 	resp, err := json.Marshal(metrics) // Запаковывает/собирает данные в массив byte
@@ -208,7 +217,7 @@ func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 
 // Ping Кидает запрос в базу, для прорки её наличия
 func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
-	db, err := sql.Open("pgx", h.FlagDatabaseDsn)
+	db, err := sql.Open("pgx", h.cfg.FlagDatabaseDsn)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -244,9 +253,9 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 	for _, metrics := range arrayMetrics {
 		switch metrics.MType {
 		case "counter":
-			storageMetric.StorageMetric.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+			h.storage.UpdateCounter(metrics.ID, metrics.Delta) //Обновляет метрику
 		case "gauge":
-			storageMetric.StorageMetric.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+			h.storage.UpdateGauge(metrics.ID, metrics.Value) //Обновляет метрику
 		}
 	}
 	w.WriteHeader(http.StatusOK)

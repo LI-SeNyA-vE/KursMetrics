@@ -60,7 +60,7 @@ func (c *ConfigServer) newVarServerFlag() {
 		FlagAddressAndPort:  "localhost:8080",
 		FlagLogLevel:        "info",
 		FlagStoreInterval:   30,
-		FlagFileStoragePath: "C:\\Users\\Сеня\\Desktop\\KursMetrics\\cmd\\server\\metrics-db.json",
+		FlagFileStoragePath: "/Users/senya/GolandProjects/KursMetrics/cmd/server/metrics-db.json",
 		FlagRestore:         false,
 		FlagDatabaseDsn:     "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable",
 		FlagKey:             "",

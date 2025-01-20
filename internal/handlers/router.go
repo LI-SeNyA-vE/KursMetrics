@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware"
+	storage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -10,21 +11,23 @@ import (
 type Router struct {
 	log *logrus.Entry
 	config.Server
+	storage storage.MetricsStorage
 	*chi.Mux
 }
 
-func NewRouter(log *logrus.Entry, cfg config.Server) *Router {
+func NewRouter(log *logrus.Entry, cfg config.Server, storages storage.MetricsStorage) *Router {
 	return &Router{
-		log:    log,
-		Server: cfg,
-		Mux:    nil,
+		log:     log,
+		Server:  cfg,
+		storage: storages,
+		Mux:     nil,
 	}
 }
 
 func (rout *Router) SetupRouter() {
 	rout.Mux = chi.NewRouter()
 	mw := middleware.NewMiddleware(rout.log, rout.Server)
-	hl := NewHandler(rout.log, rout.Server)
+	hl := NewHandler(rout.log, rout.Server, rout.storage)
 
 	rout.Mux.Use(mw.HashSHA256)
 	rout.Mux.Use(mw.LoggingMiddleware)

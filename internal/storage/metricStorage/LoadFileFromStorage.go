@@ -1,11 +1,5 @@
 package storage
 
-import (
-	"encoding/json"
-	"fmt"
-	"os"
-)
-
 //func LoadMetricFromFile(fstg string) {
 //	var res []byte
 //
@@ -30,16 +24,3 @@ import (
 //		logger.Log.Infof("Ошибка Unmarshal: %s", err)
 //	}
 //}
-
-func LoadMetricFromFile(fstg string) error {
-
-	res, err := os.ReadFile(fstg)
-	if err != nil {
-		return fmt.Errorf("Ошибка чтения файла: %s", err)
-	}
-
-	if err := json.Unmarshal(res, &StorageMetric); err != nil {
-		return fmt.Errorf("Ошибка Unmarshal: %s", err)
-	}
-	return nil
-}
