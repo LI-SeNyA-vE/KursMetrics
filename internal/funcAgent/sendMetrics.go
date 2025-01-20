@@ -139,7 +139,7 @@ func SendgBatchJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort
 		metrics = append(metrics, metricStorage.Metrics{
 			ID:    nameMetric,
 			MType: "gauge",
-			Value: value,
+			Value: &value,
 		})
 	}
 
@@ -176,7 +176,7 @@ func SendgBatchJSONMetricsCounter(mapMetric map[string]int64, flagAddressAndPort
 		metrics = append(metrics, metricStorage.Metrics{
 			ID:    nameMetric,
 			MType: "counter",
-			Delta: value,
+			Delta: &value,
 		})
 	}
 
