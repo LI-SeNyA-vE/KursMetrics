@@ -167,17 +167,37 @@ func (d *DataBase) GetAllCounters() map[string]int64 {
 	return result
 }
 
+// GetGauge возвращает значение метрики типа gauge
 func (d *DataBase) GetGauge(name string) (*float64, error) {
-	//TODO сделай меня
-	return nil, nil
+	var value float64
+	query := `SELECT value FROM gauges WHERE name = $1`
+
+	err := d.db.QueryRow(query, name).Scan(&value)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("gauge %q not found", name)
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to query gauge %q: %w", name, err)
+	}
+
+	return &value, nil
 }
 
+// GetCounter возвращает значение метрики типа counter
 func (d *DataBase) GetCounter(name string) (*int64, error) {
-	//TODO сделай меня
-	return nil, nil
+	var value int64
+	query := `SELECT value FROM counters WHERE name = $1`
+
+	err := d.db.QueryRow(query, name).Scan(&value)
+	if err == sql.ErrNoRows {
+		return nil, fmt.Errorf("counter %q not found", name)
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to query counter %q: %w", name, err)
+	}
+
+	return &value, nil
 }
 
 func (d *DataBase) LoadMetric() (err error) {
 	//TODO сделай меня
-	return err
+	return nil
 }
