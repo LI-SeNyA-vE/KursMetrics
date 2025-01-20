@@ -94,7 +94,11 @@ func (s *FileStorage) GetCounter(name string) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	//TODO сделай меня
-	return s.data.Counters[name], nil
+	result, ok := s.data.Counters[name]
+	if !ok {
+		return 0, fmt.Errorf("counter not found")
+	}
+	return result, nil
 }
 
 func (s *FileStorage) saveToFile() {
@@ -108,6 +112,9 @@ func (s *FileStorage) saveToFile() {
 }
 
 func (s *FileStorage) LoadMetric() (err error) {
+	if !s.cfg.FlagRestore {
+		return err
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	res, err := os.ReadFile(s.cfg.FlagFileStoragePath)

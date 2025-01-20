@@ -71,7 +71,7 @@ func (h *Handler) GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	case "gauge":
 		gauge, err := h.storage.GetGauge(nameMetric) // Запрашивает метрику, по данным из JSON
 		if err != nil {
-			h.log.Info("ошибка в GetReceivingMetric")
+			h.log.Info(err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
@@ -81,7 +81,7 @@ func (h *Handler) GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 	case "counter":
 		counter, err := h.storage.GetCounter(nameMetric) // Запрашивает метрику, по данным из JSON
 		if err != nil {
-			h.log.Info("ошибка в GetReceivingMetric")
+			h.log.Info(err)
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
