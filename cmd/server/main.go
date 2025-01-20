@@ -35,7 +35,7 @@ func main() {
 	}
 
 	if err != nil {
-		storage, err = fileMetric.NewFileStorage(cfgServer.FlagFileStoragePath)
+		storage, err = fileMetric.NewFileStorage(cfgServer.Server)
 		if err != nil {
 			log.Info(fmt.Errorf("NewFileStorage err: %s", err))
 
