@@ -159,7 +159,7 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	default:
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "не найдено", http.StatusNotFound)
 		return
 	}
 
