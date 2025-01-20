@@ -86,14 +86,16 @@ func (s *FileStorage) GetAllCounters() map[string]int64 {
 func (s *FileStorage) GetGauge(name string) (float64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	//TODO сделай меня
-	return s.data.Gauges[name], nil
+	result, ok := s.data.Gauges[name]
+	if !ok {
+		return 0, fmt.Errorf("counter not found")
+	}
+	return result, nil
 }
 
 func (s *FileStorage) GetCounter(name string) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	//TODO сделай меня
 	result, ok := s.data.Counters[name]
 	if !ok {
 		return 0, fmt.Errorf("counter not found")
