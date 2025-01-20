@@ -83,24 +83,24 @@ func (s *FileStorage) GetAllCounters() map[string]int64 {
 	return result
 }
 
-func (s *FileStorage) GetGauge(name string) (float64, error) {
+func (s *FileStorage) GetGauge(name string) (*float64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	result, ok := s.data.Gauges[name]
 	if !ok {
-		return 0, fmt.Errorf("counter not found")
+		return nil, fmt.Errorf("counter not found")
 	}
-	return result, nil
+	return &result, nil
 }
 
-func (s *FileStorage) GetCounter(name string) (int64, error) {
+func (s *FileStorage) GetCounter(name string) (*int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	result, ok := s.data.Counters[name]
 	if !ok {
-		return 0, fmt.Errorf("counter not found")
+		return nil, fmt.Errorf("counter not found")
 	}
-	return result, nil
+	return &result, nil
 }
 
 func (s *FileStorage) saveToFile() {

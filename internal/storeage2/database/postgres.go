@@ -167,14 +167,14 @@ func (d *DataBase) GetAllCounters() map[string]int64 {
 	return result
 }
 
-func (d *DataBase) GetGauge(name string) (float64, error) {
+func (d *DataBase) GetGauge(name string) (*float64, error) {
 	//TODO сделай меня
-	return 0, nil
+	return nil, nil
 }
 
-func (d *DataBase) GetCounter(name string) (int64, error) {
+func (d *DataBase) GetCounter(name string) (*int64, error) {
 	//TODO сделай меня
-	return 0, nil
+	return nil, nil
 }
 
 func (d *DataBase) LoadMetric() (err error) {

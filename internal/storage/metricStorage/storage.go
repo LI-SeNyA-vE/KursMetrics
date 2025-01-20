@@ -12,17 +12,17 @@ type MetricsStorage interface {
 	UpdateCounter(name string, value int64) int64
 	GetAllGauges() map[string]float64
 	GetAllCounters() map[string]int64
-	GetGauge(name string) (float64, error)
-	GetCounter(name string) (int64, error)
+	GetGauge(name string) (*float64, error)
+	GetCounter(name string) (*int64, error)
 	LoadMetric() error
 }
 
 // Структура метрики для отправки JSON
 type Metrics struct {
-	ID    string  `json:"id"`              // имя метрики
-	MType string  `json:"type"`            // параметр, принимающий значение gauge или counter
-	Delta int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
-	Value float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
+	ID    string   `json:"id"`              // имя метрики
+	MType string   `json:"type"`            // параметр, принимающий значение gauge или counter
+	Delta *int64   `json:"delta,omitempty"` // значение метрики в случае передачи counter
+	Value *float64 `json:"value,omitempty"` // значение метрики в случае передачи gauge
 }
 
 // Структура для хранения метрик в памяти
@@ -68,24 +68,24 @@ func (m *MetricStorage) GetAllCounters() map[string]int64 {
 	return m.counter
 }
 
-func (m *MetricStorage) GetGauge(name string) (float64, error) {
+func (m *MetricStorage) GetGauge(name string) (*float64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	v, ok := m.gauge[name]
 	if !ok {
-		return v, fmt.Errorf("нет метрики:%s, типа: gauge", name)
+		return &v, fmt.Errorf("нет метрики:%s, типа: gauge", name)
 	}
-	return v, nil
+	return &v, nil
 }
 
-func (m *MetricStorage) GetCounter(name string) (int64, error) {
+func (m *MetricStorage) GetCounter(name string) (*int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	v, ok := m.counter[name]
 	if !ok {
-		return v, fmt.Errorf("нет метрики:%s, типа: counter", name)
+		return &v, fmt.Errorf("нет метрики:%s, типа: counter", name)
 	}
-	return v, nil
+	return &v, nil
 }
 
 func (m *MetricStorage) LoadMetric() (err error) {

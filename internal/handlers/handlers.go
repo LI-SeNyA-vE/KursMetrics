@@ -75,7 +75,7 @@ func (h *Handler) GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		io.WriteString(w, fmt.Sprint(gauge))
+		io.WriteString(w, fmt.Sprint(*gauge))
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
 	case "counter":
@@ -85,7 +85,7 @@ func (h *Handler) GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
-		io.WriteString(w, fmt.Sprint(counter))
+		io.WriteString(w, fmt.Sprint(*counter))
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
 	}
@@ -193,11 +193,11 @@ func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	//Проверка на тип с последующим вызовом нужной функции
 	switch metrics.MType {
 	case "gauge":
-		metric := h.storage.UpdateGauge(metrics.ID, metrics.Value) //Обновляет метрику
-		metrics.Value = metric
+		metric := h.storage.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+		metrics.Value = &metric
 	case "counter":
-		metric := h.storage.UpdateCounter(metrics.ID, metrics.Delta) //Обновляет метрику
-		metrics.Delta = metric
+		metric := h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+		metrics.Delta = &metric
 	default:
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -252,9 +252,9 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 	for _, metrics := range arrayMetrics {
 		switch metrics.MType {
 		case "counter":
-			h.storage.UpdateCounter(metrics.ID, metrics.Delta) //Обновляет метрику
+			h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
 		case "gauge":
-			h.storage.UpdateGauge(metrics.ID, metrics.Value) //Обновляет метрику
+			h.storage.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
 		}
 	}
 	w.WriteHeader(http.StatusOK)
