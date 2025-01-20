@@ -3,23 +3,24 @@ package fileMetric
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"os"
 	"sync"
 )
 
 type FileStorage struct {
-	filePath string
-	mu       sync.Mutex
-	data     struct {
+	cfg  config.Server
+	mu   sync.Mutex
+	data struct {
 		Gauges   map[string]float64 `json:"gauges"`
 		Counters map[string]int64   `json:"counters"`
 	}
 }
 
 // NewFileStorage — конструктор FileStorage
-func NewFileStorage(filePath string) (*FileStorage, error) {
+func NewFileStorage(cfg config.Server) (*FileStorage, error) {
 	storage := &FileStorage{
-		filePath: filePath,
+		cfg: cfg,
 		data: struct {
 			Gauges   map[string]float64 `json:"gauges"`
 			Counters map[string]int64   `json:"counters"`
@@ -30,16 +31,19 @@ func NewFileStorage(filePath string) (*FileStorage, error) {
 	}
 
 	// Загружаем данные из файла, если он существует
-	if _, err := os.Stat(filePath); err == nil {
-		file, err := os.Open(filePath)
-		if err != nil {
-			return nil, err
-		}
-		defer file.Close()
-		if err := json.NewDecoder(file).Decode(&storage.data); err != nil {
-			return nil, err
+	if cfg.FlagRestore {
+		if _, err := os.Stat(cfg.FlagFileStoragePath); err == nil {
+			file, err := os.Open(cfg.FlagFileStoragePath)
+			if err != nil {
+				return nil, err
+			}
+			defer file.Close()
+			if err := json.NewDecoder(file).Decode(&storage.data); err != nil {
+				return nil, err
+			}
 		}
 	}
+
 	return storage, nil
 }
 
@@ -94,7 +98,7 @@ func (s *FileStorage) GetCounter(name string) (int64, error) {
 }
 
 func (s *FileStorage) saveToFile() {
-	file, err := os.Create(s.filePath)
+	file, err := os.Create(s.cfg.FlagFileStoragePath)
 	if err != nil {
 		// Обработка ошибки сохранения
 		return
@@ -106,7 +110,7 @@ func (s *FileStorage) saveToFile() {
 func (s *FileStorage) LoadMetric() (err error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	res, err := os.ReadFile(s.filePath)
+	res, err := os.ReadFile(s.cfg.FlagFileStoragePath)
 	if err != nil {
 		return fmt.Errorf("Ошибка чтения файла: %s", err)
 	}
