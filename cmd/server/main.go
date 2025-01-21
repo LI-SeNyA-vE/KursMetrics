@@ -39,7 +39,7 @@ func main() {
 		storage, err = filemetric.NewFileStorage(cfgServer.Server)
 		if err != nil {
 			log.Info(fmt.Errorf("ошибка при объявление хранения в файле err: %s", err))
-			storage = memorymetric.NewMetricStorage()
+			//storage = memorymetric.NewMetricStorage()
 		}
 	}
 
