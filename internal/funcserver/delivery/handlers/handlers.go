@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -178,8 +178,9 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	var metrics storages.Metrics
 	var buf bytes.Buffer
+	var err error
 
-	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
+	_, err = buf.ReadFrom(r.Body) //Читает данные из тела запроса
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -199,7 +200,7 @@ func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 		metric := h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
 		metrics.Delta = &metric
 	default:
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "нет такого типа", http.StatusBadRequest)
 		return
 	}
 

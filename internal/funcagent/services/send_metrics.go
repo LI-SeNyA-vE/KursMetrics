@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/utils/errorRetriable"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/utils/errorretriable"
 	"github.com/go-resty/resty/v2"
 	"log"
 	"time"
@@ -121,11 +121,11 @@ func SendingBatchMetric(gaugeMetrics map[string]float64, counterMetrics map[stri
 		select {
 		case <-ticker1.C:
 			gaugeMetrics, counterMetrics = UpdateMetric()
-			fmt.Printf("Пауза в %d секунд между сборкой метрик\n", cfg.FlagPollInterval)
+			fmt.Printf("пауза в %d секунд между сборкой метрик\n", cfg.FlagPollInterval)
 		case <-ticker2.C:
 			SendgBatchJSONMetricsGauge(gaugeMetrics, cfg.FlagAddressAndPort, cfg.FlagKey)
 			SendgBatchJSONMetricsCounter(counterMetrics, cfg.FlagAddressAndPort, cfg.FlagKey)
-			fmt.Printf("Пауза в %d секунд между отправкой 'батчей' метрик на сервер\n", cfg.FlagReportInterval)
+			fmt.Printf("пауза в %d секунд между отправкой 'батчей' метрик на сервер\n", cfg.FlagReportInterval)
 		}
 	}
 }
@@ -149,20 +149,20 @@ func SendgBatchJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort
 
 	jsonData, err := json.Marshal(metrics)
 	if err != nil {
-		log.Printf("Ошибка маршалинга метрик в JSON: %v", err)
+		log.Printf("ошибка маршалинга метрик в JSON: %v", err)
 	}
 
 	compressedData, err := gzipCompress(jsonData)
 	if err != nil {
-		log.Printf("Ошибка сжатия метрик: %v", err)
+		log.Printf("ошибка сжатия метрик: %v", err)
 	}
 
-	_, err = errorRetriable.ErrorRetriableHTTP(func() (interface{}, error) {
+	_, err = errorretriable.ErrorRetriableHTTP(func() (interface{}, error) {
 		return sendMetrics(client, url, compressedData, fladKey)
 	})
 
 	if err != nil {
-		log.Printf("Не удалось отправить 'батч' метрик типа 'Gauge' с ошибкой: %v", err)
+		log.Printf("не удалось отправить 'батч' метрик типа 'Gauge' с ошибкой: %v", err)
 	}
 }
 
@@ -186,20 +186,20 @@ func SendgBatchJSONMetricsCounter(mapMetric map[string]int64, flagAddressAndPort
 
 	jsonData, err := json.Marshal(metrics)
 	if err != nil {
-		log.Printf("Ошибка маршалинга метрик в JSON: %v", err)
+		log.Printf("ошибка маршалинга метрик в JSON: %v", err)
 	}
 
 	compressedData, err := gzipCompress(jsonData)
 	if err != nil {
-		log.Printf("Ошибка сжатия метрик: %v", err)
+		log.Printf("ошибка сжатия метрик: %v", err)
 	}
 
-	_, err = errorRetriable.ErrorRetriableHTTP(func() (interface{}, error) {
+	_, err = errorretriable.ErrorRetriableHTTP(func() (interface{}, error) {
 		return sendMetrics(client, url, compressedData, flagKey)
 	})
 
 	if err != nil {
-		log.Printf("Не удалось отправить 'батч' метрик типа 'Counter' с ошибкой: %v", err)
+		log.Printf("не удалось отправить 'батч' метрик типа 'Counter' с ошибкой: %v", err)
 	}
 }
 

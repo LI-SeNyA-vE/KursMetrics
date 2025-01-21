@@ -1,4 +1,4 @@
-package errorRetriable
+package errorretriable
 
 import (
 	"time"

@@ -2,9 +2,9 @@ package router
 
 import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/delivery/handlers"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/delivery/middleware"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/handlers"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/middleware"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 )

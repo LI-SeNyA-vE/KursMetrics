@@ -1,4 +1,4 @@
-package fileMetric
+package filemetric
 
 import (
 	"encoding/json"
@@ -121,10 +121,10 @@ func (s *FileStorage) LoadMetric() (err error) {
 	defer s.mu.Unlock()
 	res, err := os.ReadFile(s.cfg.FlagFileStoragePath)
 	if err != nil {
-		return fmt.Errorf("Ошибка чтения файла: %s", err)
+		return fmt.Errorf("ошибка чтения файла: %s", err)
 	}
 	if err = json.Unmarshal(res, &s.data); err != nil {
-		return fmt.Errorf("Ошибка Unmarshal: %s", err)
+		return fmt.Errorf("ошибка Unmarshal: %s", err)
 	}
 	return err
 }
