@@ -136,7 +136,7 @@ func (m *Middleware) HashSHA256(h http.Handler) http.Handler {
 			calculatedHash := hex.EncodeToString(h.Sum(nil))
 
 			if r.Header.Get("HashSHA256") != calculatedHash {
-				http.Error(w, fmt.Sprintf("неверный хеш | Флаг на сервере %s", m.FlagKey), http.StatusBadRequest)
+				http.Error(w, fmt.Sprint("неверный хеш | Флаг на сервере ", m.FlagKey), http.StatusBadRequest)
 				return
 			}
 
