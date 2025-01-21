@@ -42,7 +42,7 @@ func NewConnectDB(log *logrus.Entry, cfg config.Server) (*DataBase, error) {
 	}
 
 	// Подключаемся к базе metric
-	db, err := sql.Open("pgx", "host=localhost dbname=metric user=Senya password=1q2w3e4r5t sslmode=disable")
+	db, err := sql.Open("pgx", cfg.FlagDatabaseDsn)
 	if err != nil {
 		log.Printf("Ошибка подключения к базе данных metric: %v", err)
 		return nil, err
