@@ -3,11 +3,11 @@ package main
 import (
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/delivery/router"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages/database"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages/fileMetric"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages/memoryMetric"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/router"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/database"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/filemetric"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/memorymetric"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"net/http"
@@ -28,7 +28,7 @@ func main() {
 	//Подключение к БД
 
 	for i := 0; i < 3; i++ {
-		storage, err = postgresMetric.NewConnectDB(log, cfgServer.Server)
+		storage, err = database.NewConnectDB(log, cfgServer.Server)
 		if err == nil {
 			break
 		}
@@ -36,10 +36,10 @@ func main() {
 	}
 
 	if err != nil {
-		storage, err = fileMetric.NewFileStorage(cfgServer.Server)
+		storage, err = filemetric.NewFileStorage(cfgServer.Server)
 		if err != nil {
-			log.Info(fmt.Errorf("NewFileStorage err: %s", err))
-
+			log.Info(fmt.Errorf("ошибка при объявление хранения в файле err: %s", err))
+			storage = memorymetric.NewMetricStorage()
 		}
 	}
 
@@ -47,7 +47,7 @@ func main() {
 	err = storage.LoadMetric()
 	if err != nil {
 		log.Info(err)
-		storage = memoryMetric.NewMetricStorage()
+		storage = memorymetric.NewMetricStorage()
 	}
 
 	//Создаёт горутину, для сохранения данных в файл

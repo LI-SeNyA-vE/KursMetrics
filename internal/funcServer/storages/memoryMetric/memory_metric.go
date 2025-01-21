@@ -1,4 +1,4 @@
-package memoryMetric
+package memorymetric
 
 import (
 	"fmt"

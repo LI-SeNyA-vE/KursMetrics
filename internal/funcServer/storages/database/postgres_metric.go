@@ -1,11 +1,10 @@
-package postgresMetric
+package database
 
 import (
 	"database/sql"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/sirupsen/logrus"
-	"log"
 )
 
 type DataBase struct {
@@ -17,7 +16,7 @@ type DataBase struct {
 func NewConnectDB(log *logrus.Entry, cfg config.Server) (*DataBase, error) {
 	sysDB, err := sql.Open("pgx", cfg.FlagDatabaseDsn)
 	if err != nil {
-		log.Printf("Ошибка подключения к системной базе данных: %v", err)
+		log.Printf("ошибка подключения к системной базе данных: %v", err)
 		return nil, err
 	}
 	defer sysDB.Close()
@@ -27,7 +26,7 @@ func NewConnectDB(log *logrus.Entry, cfg config.Server) (*DataBase, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = 'metric')`
 	err = sysDB.QueryRow(query).Scan(&exists)
 	if err != nil {
-		log.Printf("Ошибка проверки существования базы данных: %v", err)
+		log.Printf("ошибка проверки существования базы данных: %v", err)
 		return nil, err
 	}
 
@@ -35,29 +34,29 @@ func NewConnectDB(log *logrus.Entry, cfg config.Server) (*DataBase, error) {
 		// Создаём базу metric
 		_, err = sysDB.Exec(`CREATE DATABASE metric`)
 		if err != nil {
-			log.Printf("Ошибка создания базы данных metric: %v", err)
+			log.Printf("ошибка создания базы данных metric: %v", err)
 			return nil, err
 		}
-		log.Println("База данных metric успешно создана.")
+		log.Println("база данных metric успешно создана.")
 	}
 
 	// Подключаемся к базе metric
 	db, err := sql.Open("pgx", cfg.FlagDatabaseDsn)
 	if err != nil {
-		log.Printf("Ошибка подключения к базе данных metric: %v", err)
+		log.Printf("ошибка подключения к базе данных metric: %v", err)
 		return nil, err
 	}
 
 	// Проверка соединения
 	if err := db.Ping(); err != nil {
-		log.Printf("Не удалось установить соединение с базой данных metric: %v", err)
+		log.Printf("не удалось установить соединение с базой данных metric: %v", err)
 		return nil, err
 	}
 
 	// Проверяем и создаём таблицы
-	err = ensureTablesExist(db)
+	err = ensureTablesExist(db, log)
 	if err != nil {
-		log.Printf("Ошибка проверки/создания таблиц: %v", err)
+		log.Printf("ошибка проверки/создания таблиц: %v", err)
 		return nil, err
 	}
 
@@ -68,7 +67,7 @@ func NewConnectDB(log *logrus.Entry, cfg config.Server) (*DataBase, error) {
 	}, nil
 }
 
-func ensureTablesExist(db *sql.DB) error {
+func ensureTablesExist(db *sql.DB, log *logrus.Entry) error {
 	// Проверка существования таблицы gauges
 	gaugesQuery := `
 		CREATE TABLE IF NOT EXISTS gauges (
@@ -91,7 +90,7 @@ func ensureTablesExist(db *sql.DB) error {
 		return fmt.Errorf("ошибка создания таблицы counters: %w", err)
 	}
 
-	log.Println("Таблицы gauges и counters проверены/созданы успешно.")
+	log.Println("таблицы gauges и counters проверены/созданы успешно.")
 	return nil
 }
 
@@ -103,7 +102,7 @@ func (d *DataBase) UpdateGauge(name string, value float64) float64 {
 		DO UPDATE SET value = EXCLUDED.value
 	`, name, value)
 	if err != nil {
-		d.log.Printf("Ошибка обновления gauge: %v", err)
+		d.log.Printf("ошибка обновления gauge: %v", err)
 	}
 	return value
 }
@@ -116,17 +115,19 @@ func (d *DataBase) UpdateCounter(name string, value int64) int64 {
 		DO UPDATE SET value = counters.value + EXCLUDED.value
 	`, name, value)
 	if err != nil {
-		d.log.Printf("Ошибка обновления counter: %v", err)
+		d.log.Printf("ошибка обновления counter: %v", err)
 	}
 	return value
 }
 
 func (d *DataBase) GetAllGauges() map[string]float64 {
 	rows, err := d.db.Query(`SELECT name, value FROM gauges`)
+
 	if err != nil {
-		d.log.Printf("Ошибка получения gauges: %v", err)
+		d.log.Printf("ошибка получения gauges: %v", err)
 		return nil
 	}
+
 	defer rows.Close()
 
 	result := make(map[string]float64)
@@ -134,18 +135,25 @@ func (d *DataBase) GetAllGauges() map[string]float64 {
 		var name string
 		var value float64
 		if err := rows.Scan(&name, &value); err != nil {
-			d.log.Printf("Ошибка чтения строки gauge: %v", err)
+			d.log.Printf("ошибка чтения строки gauge: %v", err)
 			continue
 		}
 		result[name] = value
 	}
+
+	// Проверяем rows.Err после итерации
+	if err = rows.Err(); err != nil {
+		d.log.Printf("Ошибка итерации gauges: %v", err)
+		return nil
+	}
+
 	return result
 }
 
 func (d *DataBase) GetAllCounters() map[string]int64 {
 	rows, err := d.db.Query(`SELECT name, value FROM counters`)
 	if err != nil {
-		d.log.Printf("Ошибка получения counters: %v", err)
+		d.log.Printf("ошибка получения counters: %v", err)
 		return nil
 	}
 	defer rows.Close()
@@ -155,11 +163,18 @@ func (d *DataBase) GetAllCounters() map[string]int64 {
 		var name string
 		var value int64
 		if err := rows.Scan(&name, &value); err != nil {
-			d.log.Printf("Ошибка чтения строки counter: %v", err)
+			d.log.Printf("ошибка чтения строки counter: %v", err)
 			continue
 		}
 		result[name] = value
 	}
+
+	// Проверяем rows.Err после итерации
+	if err = rows.Err(); err != nil {
+		d.log.Printf("Ошибка итерации gauges: %v", err)
+		return nil
+	}
+
 	return result
 }
 
