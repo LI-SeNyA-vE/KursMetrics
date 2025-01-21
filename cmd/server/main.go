@@ -7,7 +7,6 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/database"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/filemetric"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/memorymetric"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"net/http"
@@ -47,13 +46,8 @@ func main() {
 	err = storage.LoadMetric()
 	if err != nil {
 		log.Info(err)
-		storage = memorymetric.NewMetricStorage()
+		//storage = memorymetric.NewMetricStorage()
 	}
-
-	//Создаёт горутину, для сохранения данных в файл
-	//go func() {
-	//	saveMetric.SaveMetric(cfgServer.FlagFileStoragePath, cfgServer.FlagStoreInterval)
-	//}()
 
 	//Создаёт роутер
 	r := router.NewRouter(log, cfgServer.Server, storage)
@@ -61,7 +55,7 @@ func main() {
 
 	//Старт сервера
 	log.Info("Открыт сервер ", cfgServer.FlagAddressAndPort)
-	err = http.ListenAndServe(cfgServer.FlagAddressAndPort, r.Mux /*TODO добавь передачу интерфейса для работы с сохранением*/)
+	err = http.ListenAndServe(cfgServer.FlagAddressAndPort, r.Mux)
 	if err != nil {
 		panic(err)
 	}
