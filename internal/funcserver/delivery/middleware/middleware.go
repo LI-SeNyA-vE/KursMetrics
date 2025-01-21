@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
@@ -135,7 +136,7 @@ func (m *Middleware) HashSHA256(h http.Handler) http.Handler {
 			calculatedHash := hex.EncodeToString(h.Sum(nil))
 
 			if r.Header.Get("HashSHA256") != calculatedHash {
-				http.Error(w, "Неверный хеш", http.StatusBadRequest)
+				http.Error(w, fmt.Sprintf("неверный хеш | Флаг на сервере %s", m.FlagKey), http.StatusBadRequest)
 				return
 			}
 
