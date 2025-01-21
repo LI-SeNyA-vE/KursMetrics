@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
@@ -125,15 +124,15 @@ func gzipCompress(data []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func sendMetrics(client *resty.Client, url string, compressedData []byte, fladKey string) (interface{}, error) {
+func sendMetrics(client *resty.Client, url string, compressedData []byte, flagKey string) (interface{}, error) {
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
 		SetBody(compressedData)
 
-	if fladKey != "" {
-		h := hmac.New(sha256.New, []byte(fladKey))
+	if flagKey != "" {
+		h := hmac.New(sha256.New, []byte(flagKey))
 		h.Write(compressedData)
 		hash := hex.EncodeToString(h.Sum(nil))
 
@@ -143,7 +142,7 @@ func sendMetrics(client *resty.Client, url string, compressedData []byte, fladKe
 
 	// Если произошла ошибка или статус-код не 2xx, возвращаем ошибку
 	if err != nil || response.StatusCode() >= 400 {
-		return nil, errors.New("ошибка при отправке метрик")
+		return nil, fmt.Errorf("ошибка при отправке метрик: %s", err)
 	}
 
 	return response, nil
