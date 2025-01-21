@@ -11,7 +11,6 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
 	"github.com/LI-SeNyA-vE/KursMetrics/pkg/utils/errorretriable"
-
 	"github.com/go-resty/resty/v2"
 	"log"
 	"time"
@@ -142,7 +141,7 @@ func sendMetrics(client *resty.Client, url string, compressedData []byte, flagKe
 
 	// Если произошла ошибка или статус-код не 2xx, возвращаем ошибку
 	if err != nil || response.StatusCode() >= 400 {
-		return nil, fmt.Errorf("ошибка при отправке метрик: %s", err)
+		return nil, fmt.Errorf(string(response.Body()))
 	}
 
 	return response, nil
