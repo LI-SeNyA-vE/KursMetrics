@@ -14,7 +14,7 @@ func main() {
 	cfgAgent := config.NewConfigAgent(log)
 	cfgAgent.InitializeAgentConfig()
 
-	log.Infof(" FlagAddressAndPort = %s | FlagReportInterval = %s | FlagPollInterval = %s| FlagLogLevel = %s | FlagKey = %s", cfgAgent.Agent.FlagAddressAndPort, cfgAgent.Agent.FlagReportInterval, cfgAgent.Agent.FlagPollInterval, cfgAgent.Agent.FlagLogLevel, cfgAgent.Agent.FlagKey)
+	log.Infof(" FlagAddressAndPort = %s | FlagReportInterval = %d | FlagPollInterval = %d| FlagLogLevel = %s | FlagKey = %s", cfgAgent.Agent.FlagAddressAndPort, cfgAgent.Agent.FlagReportInterval, cfgAgent.Agent.FlagPollInterval, cfgAgent.Agent.FlagLogLevel, cfgAgent.Agent.FlagKey)
 	//Вытаскиваем/обновляем метрики
 	gaugeMetrics, counterMetrics := services.UpdateMetric()
 
