@@ -6,22 +6,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"strconv"
 
-	storageMetric "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
 	"github.com/go-chi/chi/v5"
 )
 
 type Handler struct {
 	log     *logrus.Entry
 	cfg     config.Server
-	storage storageMetric.MetricsStorage
+	storage storages.MetricsStorage
 }
 
-func NewHandler(log *logrus.Entry, cfg config.Server, storage storageMetric.MetricsStorage) *Handler {
+func NewHandler(log *logrus.Entry, cfg config.Server, storage storages.MetricsStorage) *Handler {
 	return &Handler{
 		log:     log,
 		cfg:     cfg,
@@ -129,7 +129,7 @@ func (h *Handler) GetReceivingAllMetric(w http.ResponseWriter, r *http.Request) 
 // JSONValue Запрашивает метрику через JSON формат
 func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
-	var metrics storageMetric.Metrics
+	var metrics storages.Metrics
 
 	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
 	if err != nil {
@@ -176,7 +176,7 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 
 // JSONUpdate Обновляет метрику через JSON запрос
 func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
-	var metrics storageMetric.Metrics
+	var metrics storages.Metrics
 	var buf bytes.Buffer
 
 	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
@@ -235,7 +235,7 @@ func (h *Handler) Ping(w http.ResponseWriter, r *http.Request) {
 // PostAddArrayMetrics Хендлер, который позволяет принимать массив метрик и сохранять его
 func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
-	var arrayMetrics []storageMetric.Metrics
+	var arrayMetrics []storages.Metrics
 
 	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
 	if err != nil {

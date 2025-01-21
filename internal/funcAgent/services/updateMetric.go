@@ -1,4 +1,4 @@
-package funcagent
+package services
 
 import (
 	"math/rand"

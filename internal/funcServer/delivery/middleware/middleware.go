@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/rs/zerolog/log"
 	"github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -55,13 +56,11 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 func (m *Middleware) UnGzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		m.log.Info("Провалились в функцию UnGzipMiddleware")
 		if !(r.Header.Get("Accept-Encoding") == "gzip") {
 			m.log.Info("Accept-Encoding не равен gzip")
 			next.ServeHTTP(w, r)
 			return
 		}
-		m.log.Info("Accept-Encoding равен gzip")
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
 			m.log.Info("Ошибка при gzip.NewWriterLevel(w, gzip.BestSpeed)")
@@ -69,7 +68,6 @@ func (m *Middleware) UnGzipMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		defer gz.Close()
-		m.log.Info("Нет ошибки при gzip.NewWriterLevel(w, gzip.BestSpeed)")
 		w.Header().Set("Content-Encoding", "gzip")
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 
@@ -110,11 +108,11 @@ func (m *Middleware) LoggingMiddleware(h http.Handler) http.Handler {
 		h.ServeHTTP(&lw, r)           // обслуживание оригинального запроса
 		duration := time.Since(start) // Since возвращает разницу во времени между start
 
-		m.log.Info(
+		log.Print(
 			"uri:", r.RequestURI,
-			"status:", responseData.status, // получаем перехваченный код статуса ответа
-			"duration:", duration,
-			"size:", len(responseData.uri), // получаем перехваченный размер ответа
+			" status:", responseData.status, // получаем перехваченный код статуса ответа
+			" duration:", duration,
+			" size:", len(responseData.uri), // получаем перехваченный размер ответа
 		)
 	}
 	return http.HandlerFunc(logFn) // возвращаем функционально расширенный хендлер

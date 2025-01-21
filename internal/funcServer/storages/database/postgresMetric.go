@@ -1,4 +1,4 @@
-package database_v2
+package postgresMetric
 
 import (
 	"database/sql"
@@ -105,8 +105,6 @@ func (d *DataBase) UpdateGauge(name string, value float64) float64 {
 	if err != nil {
 		d.log.Printf("Ошибка обновления gauge: %v", err)
 	}
-
-	//TODO сделать вывод новой переменной
 	return value
 }
 
@@ -120,8 +118,6 @@ func (d *DataBase) UpdateCounter(name string, value int64) int64 {
 	if err != nil {
 		d.log.Printf("Ошибка обновления counter: %v", err)
 	}
-
-	//TODO сделать вывод новой переменной
 	return value
 }
 
@@ -198,6 +194,5 @@ func (d *DataBase) GetCounter(name string) (*int64, error) {
 }
 
 func (d *DataBase) LoadMetric() (err error) {
-	//TODO сделай меня
-	return nil
+	return err
 }

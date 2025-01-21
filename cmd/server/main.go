@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/handlers"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/middleware/logger"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/storage/fileMetric"
-	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
-	database_v2 "github.com/LI-SeNyA-vE/KursMetrics/internal/storeage2/database"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/delivery/router"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages/database"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages/fileMetric"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages/memoryMetric"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"net/http"
 	"time"
@@ -15,7 +16,7 @@ import (
 
 func main() {
 	var err error
-	var storage metricStorage.MetricsStorage
+	var storage storages.MetricsStorage
 
 	//Инициализация логера
 	log := logger.NewLogger()
@@ -27,7 +28,7 @@ func main() {
 	//Подключение к БД
 
 	for i := 0; i < 3; i++ {
-		storage, err = database_v2.NewConnectDB(log, cfgServer.Server)
+		storage, err = postgresMetric.NewConnectDB(log, cfgServer.Server)
 		if err == nil {
 			break
 		}
@@ -46,6 +47,7 @@ func main() {
 	err = storage.LoadMetric()
 	if err != nil {
 		log.Info(err)
+		storage = memoryMetric.NewMetricStorage()
 	}
 
 	//Создаёт горутину, для сохранения данных в файл
@@ -54,7 +56,7 @@ func main() {
 	//}()
 
 	//Создаёт роутер
-	r := handlers.NewRouter(log, cfgServer.Server, storage)
+	r := router.NewRouter(log, cfgServer.Server, storage)
 	r.SetupRouter()
 
 	//Старт сервера

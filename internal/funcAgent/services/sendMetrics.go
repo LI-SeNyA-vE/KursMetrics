@@ -1,4 +1,4 @@
-package funcagent
+package services
 
 import (
 	"bytes"
@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/errorRetriable"
-	metricStorage "github.com/LI-SeNyA-vE/KursMetrics/internal/storage/metricStorage"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/utils/errorRetriable"
 	"github.com/go-resty/resty/v2"
 	"log"
 	"time"
@@ -134,9 +134,9 @@ func SendgBatchJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/updates/", flagAddressAndPort)
 
-	var metrics []metricStorage.Metrics
+	var metrics []storages.Metrics
 	for nameMetric, value := range mapMetric {
-		metrics = append(metrics, metricStorage.Metrics{
+		metrics = append(metrics, storages.Metrics{
 			ID:    nameMetric,
 			MType: "gauge",
 			Value: &value,
@@ -171,9 +171,9 @@ func SendgBatchJSONMetricsCounter(mapMetric map[string]int64, flagAddressAndPort
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/updates/", flagAddressAndPort)
 
-	var metrics []metricStorage.Metrics
+	var metrics []storages.Metrics
 	for nameMetric, value := range mapMetric {
-		metrics = append(metrics, metricStorage.Metrics{
+		metrics = append(metrics, storages.Metrics{
 			ID:    nameMetric,
 			MType: "counter",
 			Delta: &value,
