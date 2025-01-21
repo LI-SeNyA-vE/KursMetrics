@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcServer/storages"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/utils/errorRetriable"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/utils/errorretriable"
 
 	"github.com/go-resty/resty/v2"
 	"log"
@@ -64,7 +64,7 @@ func SendgBatchJSONMetricsGauge(mapMetric map[string]float64, flagAddressAndPort
 		log.Printf("Ошибка сжатия метрик: %v", err)
 	}
 
-	_, err = errorRetriable.ErrorRetriableHTTP(func() (interface{}, error) {
+	_, err = errorretriable.ErrorRetriableHTTP(func() (interface{}, error) {
 		return sendMetrics(client, url, compressedData, fladKey)
 	})
 
@@ -101,7 +101,7 @@ func SendgBatchJSONMetricsCounter(mapMetric map[string]int64, flagAddressAndPort
 		log.Printf("Ошибка сжатия метрик: %v", err)
 	}
 
-	_, err = errorRetriable.ErrorRetriableHTTP(func() (interface{}, error) {
+	_, err = errorretriable.ErrorRetriableHTTP(func() (interface{}, error) {
 		return sendMetrics(client, url, compressedData, flagKey)
 	})
 
