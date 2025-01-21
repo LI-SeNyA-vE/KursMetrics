@@ -24,6 +24,8 @@ func main() {
 	cfgServer := config.NewConfigServer(log)
 	cfgServer.InitializeServerConfig()
 
+	log.Info(cfgServer)
+
 	//Подключение к БД
 
 	for i := 0; i < 3; i++ {
