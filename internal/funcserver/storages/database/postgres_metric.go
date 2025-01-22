@@ -134,6 +134,12 @@ func (d *DataBase) UpdateCounter(name string, value int64) int64 {
 		}
 		result = value
 	}
+
+	// Проверяем rows.Err после итерации
+	if err = rows.Err(); err != nil {
+		d.log.Printf("Ошибка итерации gauges: %v", err)
+		return value
+	}
 	return result
 }
 
