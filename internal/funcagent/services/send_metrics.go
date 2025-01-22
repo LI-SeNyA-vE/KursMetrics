@@ -131,7 +131,7 @@ func sendMetrics(client *resty.Client, url string, compressedData []byte, flagKe
 		SetBody(compressedData)
 
 	if flagKey != "" {
-		h := hmac.New(sha256.New, []byte(flagKey))
+		h := hmac.New(sha256.New, []byte("123321")) //Подменяю ключ для теста
 		h.Write(compressedData)
 		hash := hex.EncodeToString(h.Sum(nil))
 
