@@ -58,12 +58,12 @@ func (c *ConfigServer) InitializeServerConfig() {
 func (c *ConfigServer) newVarServerFlag() {
 	c.Server = Server{
 		FlagAddressAndPort:  "localhost:8080",
-		FlagLogLevel:        "info",
+		FlagLogLevel:        "debug",
 		FlagStoreInterval:   30,
 		FlagFileStoragePath: "/Users/senya/GolandProjects/KursMetrics/cmd/server/metrics-db.json",
 		FlagRestore:         false,
 		FlagDatabaseDsn:     "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable",
-		FlagKey:             "123321",
+		FlagKey:             "",
 	}
 
 	err := env.Parse(&c.Server)
@@ -93,8 +93,8 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 		FlagAddressAndPort: "localhost:8080",
 		FlagReportInterval: 10,
 		FlagPollInterval:   2,
-		FlagLogLevel:       "info",
-		FlagKey:            "123321",
+		FlagLogLevel:       "debug",
+		FlagKey:            "",
 	}
 
 	//Парсит переменные окружения для агента
