@@ -57,7 +57,7 @@ func (h *Handler) PostAddValue(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "это не 'gauge' и не 'counter' запросы", http.StatusBadRequest) //Вывод error-ки
 		return                                                                        //Выход из ServeHTTP
 	}
-	h.log.Debugf("обновили метрику %s, типа %s, с значением %d", typeMetric, nameMetric, countMetric)
+	h.log.Debugf("обновили метрику %s, типа %s, с значением %s", typeMetric, nameMetric, countMetric)
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK) //Отправляет ответ что всё ОК
 }
