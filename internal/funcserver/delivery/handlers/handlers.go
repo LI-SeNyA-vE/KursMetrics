@@ -406,7 +406,8 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 					"\n  Delta: nil",
 					"\n}\n")
 			}
-			h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+			res := h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+			metrics.Delta = &res
 			if metrics.Delta != nil {
 				h.log.Debug("JSON ответа:",
 					"\n{",
@@ -439,7 +440,8 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 					"\n  Value: nil",
 					"\n}\n")
 			}
-			h.storage.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+			res := h.storage.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+			metrics.Value = &res
 			if metrics.Value != nil {
 				h.log.Debug("JSON ответа:",
 					"\n{",

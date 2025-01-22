@@ -117,7 +117,24 @@ func (d *DataBase) UpdateCounter(name string, value int64) int64 {
 	if err != nil {
 		d.log.Printf("ошибка обновления counter: %v", err)
 	}
-	return value
+
+	rows, err := d.db.Query(`SELECT name, value FROM counters WHERE name = $1`, name)
+	if err != nil {
+		d.log.Printf("ошибка получения counter: %v", err)
+		return value
+	}
+
+	defer rows.Close()
+
+	var result int64
+	for rows.Next() {
+		if err = rows.Scan(&name, &value); err != nil {
+			d.log.Printf("ошибка чтения строки counter: %v", err)
+			continue
+		}
+		result = value
+	}
+	return result
 }
 
 func (d *DataBase) GetAllGauges() map[string]float64 {
