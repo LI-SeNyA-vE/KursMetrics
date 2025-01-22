@@ -157,14 +157,12 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 				"\n{",
 				"\n  ID: ", metrics.ID,
 				"\n  MType: ", metrics.MType,
-				"\n  Value: ", *metrics.Value,
 				"\n}\n")
 		} else {
 			h.log.Debug("JSON запроса:",
 				"\n{",
 				"\n  ID: ", metrics.ID,
 				"\n  MType: ", metrics.MType,
-				"\n  Value: nil",
 				"\n}\n")
 		}
 		metrics.Value, err = h.storage.GetGauge(metrics.ID) // Запрашивает метрику, по данным из JSON
@@ -194,13 +192,11 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 				"\n{",
 				"\n  ID: ", metrics.ID,
 				"\n  MType: ", metrics.MType,
-				"\n  Delta: ", *metrics.Delta,
 				"\n}\n")
 		} else {
 			h.log.Debug("JSON запроса:",
 				"\n{",
 				"\n  ID: ", metrics.ID,
-				"\n  MType: ", metrics.MType,
 				"\n  Delta: nil",
 				"\n}\n")
 		}
