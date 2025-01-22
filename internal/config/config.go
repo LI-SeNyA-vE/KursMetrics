@@ -63,7 +63,7 @@ func (c *ConfigServer) newVarServerFlag() {
 		FlagFileStoragePath: "/Users/senya/GolandProjects/KursMetrics/cmd/server/metrics-db.json",
 		FlagRestore:         false,
 		FlagDatabaseDsn:     "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable",
-		FlagKey:             "",
+		FlagKey:             "123321",
 	}
 
 	err := env.Parse(&c.Server)
@@ -94,7 +94,7 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 		FlagReportInterval: 10,
 		FlagPollInterval:   2,
 		FlagLogLevel:       "info",
-		FlagKey:            "",
+		FlagKey:            "123321",
 	}
 
 	//Парсит переменные окружения для агента

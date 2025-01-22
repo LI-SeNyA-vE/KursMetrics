@@ -30,8 +30,8 @@ func (rout *Router) SetupRouter() {
 	mw := middleware.NewMiddleware(rout.log, rout.Server)
 	hl := handlers.NewHandler(rout.log, rout.Server, rout.storage)
 
-	rout.Mux.Use(mw.HashSHA256)
 	rout.Mux.Use(mw.LoggingMiddleware)
+	rout.Mux.Use(mw.HashSHA256)
 	rout.Mux.Use(mw.GzipMiddleware)
 	rout.Mux.Use(mw.UnGzipMiddleware)
 

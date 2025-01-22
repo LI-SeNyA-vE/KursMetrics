@@ -38,25 +38,26 @@ func (h *Handler) PostAddValue(w http.ResponseWriter, r *http.Request) {
 	case "gauge": //Если передано значение 'gauge'
 		count, err := strconv.ParseFloat(countMetric, 64) //Проверка что переданно число и его можно перевети в float64
 		if err != nil {                                   //Если не удалось перевести
-			http.Error(w, "Это не Float", http.StatusBadRequest) //Вывод error-ки
-			return                                               //
+			h.log.Infof("передано не число или его нельзя перевести в float64 | url: %v | оригинальная ощибка: %s", r.URL.Path, err)
+			http.Error(w, "это не Float", http.StatusBadRequest) //Вывод error-ки
+			return
 		}
 		h.storage.UpdateGauge(nameMetric, count)
 	case "counter": //Если передано значение 'counter'
-		{
-			count, err := strconv.ParseInt(countMetric, 10, 64) //Проверка что переданно число и его можно перевети в int64
-			if err != nil {                                     //Если не удалось перевести
-				http.Error(w, "Это не Float", http.StatusBadRequest) //Вывод error-ки
-				return                                               //
-			}
-			h.storage.UpdateCounter(nameMetric, count)
+		count, err := strconv.ParseInt(countMetric, 10, 64) //Проверка что переданно число и его можно перевети в int64
+		if err != nil {                                     //Если не удалось перевести
+			//Если не удалось перевести
+			h.log.Infof("передано не число или его нельзя перевести в int64 | url: %v | оригинальная ощибка: %s", r.URL.Path, err)
+			http.Error(w, "Это не Float", http.StatusBadRequest) //Вывод error-ки
+			return
 		}
+		h.storage.UpdateCounter(nameMetric, count)
 	default: //Если передано другое значение значение
-		{
-			http.Error(w, "Это не 'gauge' и не 'counter' запросы", http.StatusBadRequest) //Вывод error-ки
-			return                                                                        //Выход из ServeHTTP
-		}
+		h.log.Infof("передан не 'gauge' и не 'counter' | url: %s", r.URL.Path)
+		http.Error(w, "это не 'gauge' и не 'counter' запросы", http.StatusBadRequest) //Вывод error-ки
+		return                                                                        //Выход из ServeHTTP
 	}
+	h.log.Debugf("обновили метрику %s, типа %s, с значением %d", typeMetric, nameMetric, countMetric)
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusOK) //Отправляет ответ что всё ОК
 }
@@ -88,6 +89,10 @@ func (h *Handler) GetReceivingMetric(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, fmt.Sprint(*counter))
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusOK)
+	default:
+		h.log.Infof("передан не 'gauge' и не 'counter' | url: %s", r.URL.Path)
+		http.Error(w, "это не 'gauge' и не 'counter' запросы", http.StatusBadRequest)
+		return
 	}
 }
 
@@ -133,32 +138,99 @@ func (h *Handler) JSONValue(w http.ResponseWriter, r *http.Request) {
 
 	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
 	if err != nil {
+		h.log.Infof("ошибка чтения запроса %s", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	err = json.Unmarshal(buf.Bytes(), &metrics) // Разбирает данные из массива byte в структуру "metrics"
 	if err != nil {
+		h.log.Infof("ошибка анмаршлинга запроса в JSON, %s", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	switch metrics.MType {
 	case "gauge":
+		if metrics.Value != nil {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: ", *metrics.Value,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: nil",
+				"\n}\n")
+		}
 		metrics.Value, err = h.storage.GetGauge(metrics.ID) // Запрашивает метрику, по данным из JSON
+		if metrics.Value != nil {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: ", *metrics.Value,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: nil",
+				"\n}\n")
+		}
 		if err != nil {
 			h.log.Info(err)
 			http.Error(w, "не найдено", http.StatusNotFound)
 			return
 		}
 	case "counter":
+		if metrics.Delta != nil {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: ", *metrics.Delta,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: nil",
+				"\n}\n")
+		}
 		metrics.Delta, err = h.storage.GetCounter(metrics.ID) // Запрашивает метрику, по данным из JSON
+		if metrics.Delta != nil {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: ", *metrics.Delta,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: nil",
+				"\n}\n")
+		}
 		if err != nil {
 			h.log.Info(err)
 			http.Error(w, "не найдено", http.StatusNotFound)
 			return
 		}
 	default:
+		h.log.Debug("JSON запроса и ответа:",
+			"\n{",
+			"\n  ID: ", metrics.ID,
+			"\n  MType: ", metrics.MType,
+			"\n}\n")
 		http.Error(w, "не найдено", http.StatusNotFound)
 		return
 	}
@@ -191,15 +263,81 @@ func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	//Проверка на тип с последующим вызовом нужной функции
 	switch metrics.MType {
 	case "gauge":
+		if metrics.Value != nil {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: ", *metrics.Value,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: nil",
+				"\n}\n")
+		}
 		metric := h.storage.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
 		metrics.Value = &metric
+		if metrics.Value != nil {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: ", *metrics.Value,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Value: nil",
+				"\n}\n")
+		}
 	case "counter":
+		if metrics.Delta != nil {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: ", *metrics.Delta,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON запроса:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: nil",
+				"\n}\n")
+		}
 		metric := h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
 		metrics.Delta = &metric
+		if metrics.Delta != nil {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: ", *metrics.Delta,
+				"\n}\n")
+		} else {
+			h.log.Debug("JSON ответа:",
+				"\n{",
+				"\n  ID: ", metrics.ID,
+				"\n  MType: ", metrics.MType,
+				"\n  Delta: nil",
+				"\n}\n")
+		}
 	default:
+		h.log.Debug("JSON ответа:",
+			"\n{",
+			"\n  ID: ", metrics.ID,
+			"\n  MType: ", metrics.MType,
+			"\n}\n")
 		http.Error(w, "нет такого типа", http.StatusBadRequest)
 		return
 	}
@@ -253,9 +391,70 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 	for _, metrics := range arrayMetrics {
 		switch metrics.MType {
 		case "counter":
+			if metrics.Delta != nil {
+				h.log.Debug("JSON запроса:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Delta: ", *metrics.Delta,
+					"\n}\n")
+			} else {
+				h.log.Debug("JSON запроса:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Delta: nil",
+					"\n}\n")
+			}
 			h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+			if metrics.Delta != nil {
+				h.log.Debug("JSON ответа:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Delta: ", *metrics.Delta,
+					"\n}\n")
+			} else {
+				h.log.Debug("JSON ответа:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Delta: nil",
+					"\n}\n")
+			}
+
 		case "gauge":
+			if metrics.Value != nil {
+				h.log.Debug("JSON запроса:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Value: ", *metrics.Value,
+					"\n}\n")
+			} else {
+				h.log.Debug("JSON запроса:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Value: nil",
+					"\n}\n")
+			}
 			h.storage.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+			if metrics.Value != nil {
+				h.log.Debug("JSON ответа:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Value: ", *metrics.Value,
+					"\n}\n")
+			} else {
+				h.log.Debug("JSON ответа:",
+					"\n{",
+					"\n  ID: ", metrics.ID,
+					"\n  MType: ", metrics.MType,
+					"\n  Value: nil",
+					"\n}\n")
+			}
 		}
 	}
 	w.WriteHeader(http.StatusOK)
