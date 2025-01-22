@@ -66,11 +66,6 @@ func (c *ConfigServer) newVarServerFlag() {
 		FlagKey:             "",
 	}
 
-	err := env.Parse(&c.Server)
-	if err != nil {
-		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
-	}
-
 	// Определение флагов
 	flag.StringVar(&c.Server.FlagAddressAndPort, "a", c.Server.FlagAddressAndPort, "Указываем адрес и порт по которому будем подключаться")
 	flag.StringVar(&c.Server.FlagLogLevel, "l", c.Server.FlagLogLevel, "Уровень логирования")
@@ -81,6 +76,11 @@ func (c *ConfigServer) newVarServerFlag() {
 	flag.StringVar(&c.Server.FlagKey, "k", c.Server.FlagKey, "Строка подключения к базе данных")
 	// Парсинг флагов
 	flag.Parse()
+
+	err := env.Parse(&c.Server)
+	if err != nil {
+		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
+	}
 }
 
 func (c *ConfigAgent) InitializeAgentConfig() Agent {
@@ -97,12 +97,6 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 		FlagKey:            "",
 	}
 
-	//Парсит переменные окружения для агента
-	err := env.Parse(&c.Agent)
-	if err != nil {
-		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
-	}
-
 	// Определение флагов
 	flag.StringVar(&c.Agent.FlagAddressAndPort, "a", c.Agent.FlagAddressAndPort, "Указываем адрес и порт по которому будем подключаться")
 	flag.Int64Var(&c.Agent.FlagReportInterval, "r", c.Agent.FlagReportInterval, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
@@ -111,6 +105,12 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 	flag.StringVar(&c.Agent.FlagKey, "k", c.Agent.FlagKey, "Строка подключения к базе данных")
 	// Парсинг флагов
 	flag.Parse()
+
+	//Парсит переменные окружения для агента
+	err := env.Parse(&c.Agent)
+	if err != nil {
+		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
+	}
 
 	return c.Agent
 }

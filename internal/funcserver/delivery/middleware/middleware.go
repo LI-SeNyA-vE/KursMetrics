@@ -130,7 +130,7 @@ func (m *Middleware) HashSHA256(h http.Handler) http.Handler {
 			}
 
 			// Вычисляем хеш от тела запроса с использованием ключа
-			h := hmac.New(sha256.New, []byte("123321")) //Подменяю ключ для теста
+			h := hmac.New(sha256.New, []byte(m.FlagKey)) //Подменяю ключ для теста
 			h.Write(body)
 
 			calculatedHash := hex.EncodeToString(h.Sum(nil))
