@@ -1,20 +1,14 @@
-package config
+package servercfg
 
 import (
 	"flag"
 	"github.com/caarlos0/env/v6"
-	_ "github.com/jackc/pgx/v4/stdlib"
 	"github.com/sirupsen/logrus"
 )
 
 type ConfigServer struct {
 	log *logrus.Entry
 	Server
-}
-
-type ConfigAgent struct {
-	log *logrus.Entry
-	Agent
 }
 
 type Server struct {
@@ -27,28 +21,12 @@ type Server struct {
 	FlagKey             string `env:"KEY"`
 }
 
-type Agent struct {
-	FlagAddressAndPort string `env:"ADDRESS"`
-	FlagReportInterval int64  `env:"REPORT_INTERVAL"`
-	FlagPollInterval   int64  `env:"POLL_INTERVAL"`
-	FlagLogLevel       string `env:"LOG_LEVEL"`
-	FlagKey            string `env:"KEY"`
-}
-
 func NewConfigServer(log *logrus.Entry) *ConfigServer {
 	return &ConfigServer{
 		log:    log,
 		Server: Server{},
 	}
 }
-
-func NewConfigAgent(log *logrus.Entry) *ConfigAgent {
-	return &ConfigAgent{
-		log:   log,
-		Agent: Agent{},
-	}
-}
-
 func (c *ConfigServer) InitializeServerConfig() {
 	//Парсит флаги
 	c.newVarServerFlag()
@@ -60,7 +38,7 @@ func (c *ConfigServer) newVarServerFlag() {
 		FlagAddressAndPort:  "localhost:8080",
 		FlagLogLevel:        "debug",
 		FlagStoreInterval:   30,
-		FlagFileStoragePath: "/Users/senya/GolandProjects/KursMetrics/cmd/server/metrics-db.json",
+		FlagFileStoragePath: "/Users/senya/GolandProjects/KursMetrics/cmd/config/metrics-db.json",
 		FlagRestore:         false,
 		FlagDatabaseDsn:     "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable",
 		FlagKey:             "",
@@ -81,36 +59,4 @@ func (c *ConfigServer) newVarServerFlag() {
 	if err != nil {
 		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
 	}
-}
-
-func (c *ConfigAgent) InitializeAgentConfig() Agent {
-	//Парсит флаги и переменные окружения
-	return c.newAgentFlag()
-}
-
-func (c *ConfigAgent) newAgentFlag() Agent {
-	c.Agent = Agent{
-		FlagAddressAndPort: "localhost:8080",
-		FlagReportInterval: 10,
-		FlagPollInterval:   2,
-		FlagLogLevel:       "debug",
-		FlagKey:            "",
-	}
-
-	// Определение флагов
-	flag.StringVar(&c.Agent.FlagAddressAndPort, "a", c.Agent.FlagAddressAndPort, "Указываем адрес и порт по которому будем подключаться")
-	flag.Int64Var(&c.Agent.FlagReportInterval, "r", c.Agent.FlagReportInterval, "Время ожидания перед отправкой в секундах, по умолчанию 10 сек")
-	flag.Int64Var(&c.Agent.FlagPollInterval, "p", c.Agent.FlagPollInterval, "Частота опроса метрик из пакета runtime в секундах, по умолчанию 2 сек")
-	flag.StringVar(&c.Agent.FlagLogLevel, "l", c.Agent.FlagLogLevel, "Уровень логирования")
-	flag.StringVar(&c.Agent.FlagKey, "k", c.Agent.FlagKey, "Строка подключения к базе данных")
-	// Парсинг флагов
-	flag.Parse()
-
-	//Парсит переменные окружения для агента
-	err := env.Parse(&c.Agent)
-	if err != nil {
-		c.log.Info("Ошибка на этапе парсинга переменных окружения", err)
-	}
-
-	return c.Agent
 }
