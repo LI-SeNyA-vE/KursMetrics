@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/config"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/servercfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/handlers"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/middleware"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
@@ -11,12 +11,12 @@ import (
 
 type Router struct {
 	log *logrus.Entry
-	config.Server
+	servercfg.Server
 	storage storages.MetricsStorage
 	*chi.Mux
 }
 
-func NewRouter(log *logrus.Entry, cfg config.Server, storages storages.MetricsStorage) *Router {
+func NewRouter(log *logrus.Entry, cfg servercfg.Server, storages storages.MetricsStorage) *Router {
 	return &Router{
 		log:     log,
 		Server:  cfg,

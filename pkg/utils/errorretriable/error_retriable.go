@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-var timeDelay = [3]time.Duration{1, 3, 5}
+var timeDelay = [3]time.Duration{1, 1, 1}
 
 // Функция для повторного выполнения
 func ErrorRetriableHTTP(inputFunc func() (interface{}, error)) (interface{}, error) {
