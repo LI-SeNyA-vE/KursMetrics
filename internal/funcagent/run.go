@@ -9,6 +9,7 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
+	_ "net/http/pprof"
 	"sync"
 	"time"
 )

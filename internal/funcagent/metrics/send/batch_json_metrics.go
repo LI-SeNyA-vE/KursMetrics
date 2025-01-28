@@ -9,7 +9,7 @@ import (
 	"log"
 )
 
-func SendBatchJSONMetrics(mapMetricGauge map[string]float64, mapMetricCounter map[string]int64, flagAddressAndPort string, fladKey string) {
+func SendBatchJSONMetrics(mapMetricGauge map[string]float64, mapMetricCounter map[string]int64, flagAddressAndPort string, flagKey string) {
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/updates/", flagAddressAndPort)
 
@@ -44,7 +44,7 @@ func SendBatchJSONMetrics(mapMetricGauge map[string]float64, mapMetricCounter ma
 	}
 
 	_, err = errorretriable.ErrorRetriableHTTP(func() (interface{}, error) {
-		return sendMetrics(client, url, compressedData, fladKey)
+		return sendMetrics(client, url, compressedData, flagKey)
 	})
 
 	if err != nil {

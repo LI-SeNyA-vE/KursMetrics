@@ -8,13 +8,22 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/database/postgresql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/filemetric"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
+	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"time"
 )
 
 func Run() {
 	var err error
 	var storage storages.MetricsStorage
+
+	go func() {
+		log.Println("pprof запущен на :6060")
+		if err := http.ListenAndServe("localhost:6060", nil); err != nil {
+			log.Fatalf("Не удалось запустить pprof: %v", err)
+		}
+	}()
 
 	//Инициализация логера
 	log := logger.NewLogger()
