@@ -1,3 +1,6 @@
+//Package update предоставляет функции для получения метрик из Go runtime,
+//а также генерации дополнительных значений (например, псевдослучайных).
+
 package update
 
 import (
@@ -5,7 +8,15 @@ import (
 	"runtime"
 )
 
-// UpdateMetric обновляет/вытягивает с системы метрики ПК
+// UpdateMetric собирает метрики о текущем состоянии памяти через runtime.ReadMemStats().
+// Функция возвращает два набора метрик:
+//   - map[string]float64 (метрики типа gauge),
+//   - map[string]int64 (метрики типа counter).
+//
+// В gauge-метриках отображаются такие показатели, как Alloc, HeapSys, Mallocs,
+// а также добавляется случайная метрика RandomValue (генерируется rand.Float64()).
+// В counter-метриках доступен PollCount, который в данном случае всегда равен 1
+// и может использоваться для подсчёта количества "циклов" сбора метрик.
 func UpdateMetric() (map[string]float64, map[string]int64) {
 	var memStats runtime.MemStats
 	runtime.ReadMemStats(&memStats)
@@ -40,6 +51,7 @@ func UpdateMetric() (map[string]float64, map[string]int64) {
 		"TotalAlloc":    float64(memStats.TotalAlloc),
 		"RandomValue":   float64(rand.Float64()),
 	}
+
 	mapMetricsCounter := map[string]int64{
 		"PollCount": 1,
 	}

@@ -1,5 +1,14 @@
+/*
+Package postgresql содержит реализацию интерфейса MetricsStorage на базе PostgreSQL.
+Методы GetAllCounters и GetAllGauges возвращают все имеющиеся в базе counter- и gauge-метрики
+соответственно, в виде карт [имя_метрики]значение.
+*/
 package postgresql
 
+// GetAllCounters выполняет запрос queryGetAllCounters к базе данных,
+// считывая все метрики типа counter и возвращая их в виде карты map[string]int64.
+// В случае ошибки чтения или парсинга строк пишет соответствующую информацию в лог
+// и возвращает nil.
 func (d *DataBase) GetAllCounters() map[string]int64 {
 	rows, err := d.db.Query(queryGetAllCounters)
 	if err != nil {
@@ -19,9 +28,9 @@ func (d *DataBase) GetAllCounters() map[string]int64 {
 		result[name] = value
 	}
 
-	// Проверяем rows.Err после итерации
+	// Проверяем rows.Err() для выявления ошибок итерации
 	if err = rows.Err(); err != nil {
-		d.log.Printf("Ошибка итерации gauges: %v", err)
+		d.log.Printf("Ошибка итерации counters: %v", err)
 		return nil
 	}
 

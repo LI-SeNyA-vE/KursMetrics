@@ -1,3 +1,8 @@
+/*
+Package postgresql предоставляет реализацию интерфейса MetricsStorage
+(см. internal/funcserver/storages/metric.go) с использованием PostgreSQL
+в качестве основного хранилища метрик.
+*/
 package postgresql
 
 import (
@@ -6,6 +11,16 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+/*
+DataBase представляет собой структуру, хранящую:
+
+  - log: логгер на базе logrus.Entry,
+  - cfg: конфигурацию сервера (servercfg.Server),
+  - db:  объект *sql.DB (активное соединение с базой данных PostgreSQL).
+
+Она реализует интерфейс MetricsStorage, обеспечивая методы
+для чтения, записи и обновления метрик (counter, gauge).
+*/
 type DataBase struct {
 	log *logrus.Entry
 	cfg servercfg.Server

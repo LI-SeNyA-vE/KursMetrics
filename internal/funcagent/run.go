@@ -1,37 +1,56 @@
+//Package funcagent реализует логику работы Агента (Agent) в проекте KursMetrics.
+//В этом пакете происходит сбор метрик (через runtime и gopsutil) и регулярная
+//отправка их на сервер по заданному адресу. Работа организована посредством
+//нескольких горутин и ограниченного пула воркеров (Worker Pool).
+
 package funcagent
 
 import (
 	"context"
 	"fmt"
+
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/agentcfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/send"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/update"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
-	_ "net/http/pprof"
+	_ "net/http/pprof" // Импортируем для возможности запуска pprof
 	"sync"
 	"time"
 )
 
+// MetricData хранит набор метрик двух типов:
+//   - gauge (группа метрик float64),
+//   - counter (группа метрик int64).
 type MetricData struct {
 	gaugeMetrics   map[string]float64
 	counterMetrics map[string]int64
 }
 
+// Run инициализирует работу всего агента, включая:
+//
+//   - Чтение конфигурации (флаги и переменные окружения),
+//   - Логирование,
+//   - Горутины по сбору метрик (runtime, gopsutil),
+//   - Работу пула воркеров (Worker Pool) для отправки собранных метрик,
+//
+// и блокируется до завершения, чтобы приложение не выходило из main.
+// Для остановки может быть использован контекст (ctx) с cancel().
 func Run() {
 	var metricData MetricData
 	metricData.gaugeMetrics = make(map[string]float64)
 	metricData.counterMetrics = make(map[string]int64)
 	var mu sync.Mutex
-	//Инициализация логера
+
+	// Инициализация логгера.
 	log := logger.NewLogger()
 
-	//Инициализация конфига для Агента
+	// Инициализация конфига для Агента.
 	cfgAgent := agentcfg.NewConfigAgent(log)
 	cfgAgent.InitializeAgentConfig()
 
-	// Вывод догов на дебаге, для отслеживания
+	// Вывод части настроек для отладки.
 	log.Debugf("Адрес сервера: %s | Интервал отправки: %d | Интервал опроса: %d | Уровень логирования: %s | Key: %s | RateLimit: %d",
 		cfgAgent.FlagAddressAndPort,
 		cfgAgent.FlagReportInterval,
@@ -41,46 +60,38 @@ func Run() {
 		cfgAgent.FlagRateLimit,
 	)
 
-	// Создадим общий контекст (на случай, если захотите останавливать горутины по cancel)
+	// Создаём общий контекст, который будет использован
+	// для управляемого завершения горутин (через cancel()).
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Канал для «сырых» данных (jobs), которые нужно отправлять
-	jobs := make(chan MetricData) // Можно засунуть в метод startWorkerPool
+	// jobs — канал, куда будут поступать "задания" (снимки метрик) для отправки.
+	jobs := make(chan MetricData)
 
-	// Запускаем Worker Pool с ограничением concurrency = FlagRateLimit
-	// которая будет отправлять метрики
+	// Запускаем пул воркеров, который будет отправлять метрики (SendBatchJSONMetrics).
 	var wg sync.WaitGroup
 	startWorkerPool(ctx, &wg, jobs, *cfgAgent, log)
 
-	// Запускаем горутину опроса runtime
-	// runtime
+	// Горутина опроса runtime-метрик каждые FlagPollInterval секунд.
 	go func() {
 		ticker := time.NewTicker(time.Duration(cfgAgent.FlagPollInterval) * time.Second)
 		defer ticker.Stop()
 
-		// Локальные переменные под данные метрик
-		var runtimeGauge map[string]float64
-		var runtimeCounter map[string]int64
-
 		for {
 			select {
 			case <-ticker.C:
-				// Собираем runtime-метрики
-				runtimeGauge, runtimeCounter = update.UpdateMetric()
+				runtimeGauge, runtimeCounter := update.UpdateMetric()
 
-				// Блокируем переменную для записи метрик
+				// Синхронизируем доступ к shared-структуре metricData.
 				mu.Lock()
-				// Записываем в переменную значения полученные с UpdateMetric
 				for name, value := range runtimeGauge {
 					metricData.gaugeMetrics[name] = value
 				}
-				// Записываем в переменную значения полученные с UpdateMetric
 				for name, value := range runtimeCounter {
 					metricData.counterMetrics[name] = value
 				}
-				// Снимаем блокировку
 				mu.Unlock()
+
 				log.Info("Собрали метрики runtime")
 			case <-ctx.Done():
 				return
@@ -88,8 +99,7 @@ func Run() {
 		}
 	}()
 
-	// Запускаем горутину опроса системных метрик через gopsutil
-	// system
+	// Горутина опроса системных метрик (через gopsutil) каждые FlagPollInterval секунд.
 	go func() {
 		ticker := time.NewTicker(time.Duration(cfgAgent.FlagPollInterval) * time.Second)
 		defer ticker.Stop()
@@ -99,7 +109,6 @@ func Run() {
 		for {
 			select {
 			case <-ticker.C:
-				// Пример использования gopsutil
 				if vmStat, err := mem.VirtualMemory(); err == nil {
 					gaugeMetrics["TotalMemory"] = float64(vmStat.Total)
 					gaugeMetrics["FreeMemory"] = float64(vmStat.Free)
@@ -108,14 +117,12 @@ func Run() {
 					gaugeMetrics["CPUutilization1"] = cpuPercent[0]
 				}
 
-				// Блокируем переменную для записи метрик
 				mu.Lock()
-				// Записываем в переменную значения полученные с VirtualMemory и Percent
 				for name, value := range gaugeMetrics {
 					metricData.gaugeMetrics[name] = value
 				}
-				// Снимаем блокировку
 				mu.Unlock()
+
 				log.Info("Собрали метрики gopsutil")
 			case <-ctx.Done():
 				return
@@ -123,19 +130,20 @@ func Run() {
 		}
 	}()
 
-	// Запускаем горутину, которая периодически будет «формировать» финальный объект MetricData
-	// и складывать его в канал jobs, чтобы воркеры могли отправлять его на сервер.
+	// Горутина, формирующая каждые FlagReportInterval секунд "снимок" метрик
+	// и отправляющая его в канал jobs для асинхронной отправки.
 	go func() {
 		ticker := time.NewTicker(time.Duration(cfgAgent.FlagReportInterval) * time.Second)
 		defer ticker.Stop()
+
 		for {
 			select {
 			case <-ticker.C:
-				// Сформировали структуру и отправили «задание» на отправку
 				mu.Lock()
 				gauge := copyGauge(metricData.gaugeMetrics)
 				counter := copyCounter(metricData.counterMetrics)
 				mu.Unlock()
+
 				jobs <- MetricData{
 					gaugeMetrics:   gauge,
 					counterMetrics: counter,
@@ -147,8 +155,7 @@ func Run() {
 					len(jobs),
 				)
 
-				// После отправки можно обнулить/очистить локальные данные,
-				// чтобы «начинать с чистого листа» (если требуется).
+				// Обнуление локального накопления, если нужно отслеживать "прирост".
 				metricData.gaugeMetrics = make(map[string]float64)
 				metricData.counterMetrics = make(map[string]int64)
 			case <-ctx.Done():
@@ -157,12 +164,13 @@ func Run() {
 		}
 	}()
 
-	// «Зависаем» в select{}, чтобы main не завершался
+	// select{} — чтобы функция Run не завершалась сама по себе.
 	select {}
 }
 
-// startWorkerPool запускает нужное количество воркеров (равное rateLimit).
-// Каждый воркер читает из канала jobs структуру MetricData и отправляет метрики на сервер.
+// startWorkerPool запускает несколько горутин-воркеров, количество которых
+// определяется параметром rateLimit (если < 1, то ставится 1).
+// Каждый воркер берёт MetricData из канала jobs и вызывает SendBatchJSONMetrics.
 func startWorkerPool(
 	ctx context.Context,
 	wg *sync.WaitGroup,
@@ -178,6 +186,7 @@ func startWorkerPool(
 	if rateLimit < 1 {
 		rateLimit = 1
 	}
+
 	for i := int64(0); i < rateLimit; i++ {
 		wg.Add(1)
 		go func(workerID int64) {
@@ -190,6 +199,7 @@ func startWorkerPool(
 					if !ok {
 						return
 					}
+					// Для отладки выводим размер очереди.
 					fmt.Printf("Запросов в очереди: %d", len(jobs))
 					send.SendBatchJSONMetrics(mData.gaugeMetrics, mData.counterMetrics, serverAddr, key)
 				}
@@ -198,12 +208,8 @@ func startWorkerPool(
 	}
 }
 
-// sendMetrics — пример функции отправки набора метрик.
-// Вы можете разделять на gauge/counter, как у вас было в send.SendBatchJSONMetricsGauge/Counter.
-// Здесь для наглядности общее.
-
-// Функции для копирования map, чтобы не было гонок,
-// если мы хотим «снимок» данных перед отправкой:
+// copyGauge создаёт копию переданной карты gauge-метрик, чтобы
+// избежать гонок при конкурентном доступе.
 func copyGauge(src map[string]float64) map[string]float64 {
 	dst := make(map[string]float64, len(src))
 	for k, v := range src {
@@ -211,6 +217,9 @@ func copyGauge(src map[string]float64) map[string]float64 {
 	}
 	return dst
 }
+
+// copyCounter создаёт копию карты counter-метрик, чтобы
+// сделать "снимок" данных перед отправкой.
 func copyCounter(src map[string]int64) map[string]int64 {
 	dst := make(map[string]int64, len(src))
 	for k, v := range src {
