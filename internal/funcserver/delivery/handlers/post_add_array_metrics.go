@@ -1,3 +1,8 @@
+/*
+Package handlers содержит функцию PostAddArrayMetrics, позволяющую обработать
+JSON-массив метрик (MType gauge или counter) и сохранить каждую из них
+в соответствующем хранилище.
+*/
 package handlers
 
 import (
@@ -7,23 +12,28 @@ import (
 	"net/http"
 )
 
-// PostAddArrayMetrics Хендлер, который позволяет принимать массив метрик и сохранять его
+// PostAddArrayMetrics обрабатывает JSON-массив метрик, переданных в теле запроса.
+// Для каждой метрики (gauge или counter) вызывается соответствующий метод обновления
+// в хранилище. После успешной обработки возвращается статус 200 (OK). Если при чтении
+// тела запроса или его парсинге в массив метрик возникнут ошибки, клиенту будет
+// отдан код 400 (Bad Request).
 func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 	var buf bytes.Buffer
 	var arrayMetrics []storages.Metrics
 
-	_, err := buf.ReadFrom(r.Body) //Читает данные из тела запроса
+	_, err := buf.ReadFrom(r.Body) // Читаем данные из тела запроса
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = json.Unmarshal(buf.Bytes(), &arrayMetrics) // Разбирает данные из массива byte в массив структур "metrics"
+	err = json.Unmarshal(buf.Bytes(), &arrayMetrics) // Парсим массив метрик из JSON
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	// Обходим полученный срез метрик и обновляем каждую по типу (counter/gauge)
 	for _, metrics := range arrayMetrics {
 		switch metrics.MType {
 		case "counter":
@@ -42,7 +52,7 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 					"\n  Delta: nil",
 					"\n}\n")
 			}
-			res := h.storage.UpdateCounter(metrics.ID, *metrics.Delta) //Обновляет метрику
+			res := h.storage.UpdateCounter(metrics.ID, *metrics.Delta)
 			metrics.Delta = &res
 			if metrics.Delta != nil {
 				h.log.Debug("JSON ответа:",
@@ -76,7 +86,7 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 					"\n  Value: nil",
 					"\n}\n")
 			}
-			res := h.storage.UpdateGauge(metrics.ID, *metrics.Value) //Обновляет метрику
+			res := h.storage.UpdateGauge(metrics.ID, *metrics.Value)
 			metrics.Value = &res
 			if metrics.Value != nil {
 				h.log.Debug("JSON ответа:",

@@ -1,3 +1,8 @@
+/*
+GetCounter и GetGauge возвращают значения отдельных метрик (counter или gauge)
+из PostgreSQL. Если метрика не найдена — возвращают ошибку вида "<type> <name> not found".
+При любых иных ошибках запросов также возвращают ошибку в обёрнутом формате.
+*/
 package postgresql
 
 import (
@@ -6,7 +11,9 @@ import (
 	"fmt"
 )
 
-// GetCounter возвращает значение метрики типа counter
+// GetCounter возвращает значение метрики типа counter по её имени (name).
+// Если метрика не найдена — возвращает ошибку "counter <name> not found".
+// Если возникла иная ошибка во время чтения из БД, она будет обёрнута и возвращена.
 func (d *DataBase) GetCounter(name string) (*int64, error) {
 	var value int64
 	query := queryGetCounter

@@ -1,3 +1,8 @@
+/*
+Package postgresql предоставляет реализацию интерфейса MetricsStorage
+(см. internal/funcserver/storages/metric.go) с использованием PostgreSQL
+в качестве основного хранилища метрик.
+*/
 package postgresql
 
 import (
@@ -6,6 +11,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// NewConnectDB осуществляет подключение к базе данных PostgreSQL.
+// Если база "metrics" не существует, она создаётся. После чего происходит проверка/создание
+// необходимых таблиц gauges и counters (ensureTablesExist). Возвращает объект DataBase
+// или ошибку, если возникли проблемы с подключением или созданием структуры.
 func NewConnectDB(log *logrus.Entry, cfg servercfg.Server) (*DataBase, error) {
 	sysDB, err := sql.Open("pgx", cfg.FlagDatabaseDsn)
 	if err != nil {
@@ -23,8 +32,8 @@ func NewConnectDB(log *logrus.Entry, cfg servercfg.Server) (*DataBase, error) {
 		return nil, err
 	}
 
+	// Если базы metrics нет — создаём
 	if !exists {
-		// Создаём базу metrics
 		_, err = sysDB.Exec(queryCreateDatMetric)
 		if err != nil {
 			log.Printf("ошибка создания базы данных metrics: %v", err)
@@ -40,13 +49,13 @@ func NewConnectDB(log *logrus.Entry, cfg servercfg.Server) (*DataBase, error) {
 		return nil, err
 	}
 
-	// Проверка соединения
+	// Проверка соединения (ping)
 	if err := db.Ping(); err != nil {
 		log.Printf("не удалось установить соединение с базой данных metrics: %v", err)
 		return nil, err
 	}
 
-	// Проверяем и создаём таблицы
+	// Проверяем и создаём таблицы (gauges, counters)
 	err = ensureTablesExist(db, log)
 	if err != nil {
 		log.Printf("ошибка проверки/создания таблиц: %v", err)
