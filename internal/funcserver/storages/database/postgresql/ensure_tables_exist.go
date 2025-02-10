@@ -1,8 +1,6 @@
-/*
-Package postgresql предоставляет реализацию хранилища метрик в базе данных PostgreSQL.
-Функция ensureTablesExist выполняет проверку наличия (и при необходимости
-создание) таблиц gauges и counters, необходимых для хранения метрик.
-*/
+// Package postgresql предоставляет реализацию хранилища метрик в базе данных PostgreSQL.
+// Функция ensureTablesExist выполняет проверку наличия (и при необходимости
+// создание) таблиц gauges и counters, необходимых для хранения метрик.
 package postgresql
 
 import (
