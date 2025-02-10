@@ -1,3 +1,4 @@
+// Package agentcfg
 package agentcfg
 
 import (

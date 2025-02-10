@@ -1,8 +1,5 @@
-/*
-Package postgresql предоставляет реализацию интерфейса MetricsStorage
-(см. internal/funcserver/storages/metric.go) с использованием PostgreSQL
-в качестве основного хранилища метрик.
-*/
+// Package postgresql содержит реализацию интерфейса MetricsStorage на базе PostgreSQL.
+// UpdateGauge выполняет запрос queryUpdateGauge, вставляя или обновляя
 package postgresql
 
 // UpdateGauge выполняет запрос queryUpdateGauge, вставляя или обновляя

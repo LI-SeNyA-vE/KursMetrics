@@ -1,3 +1,4 @@
+// Package filemetric предоставляет реализацию хранилища метрик в локальном хранилище.
 package filemetric
 
 func (s *FileStorage) UpdateCounter(name string, value int64) int64 {

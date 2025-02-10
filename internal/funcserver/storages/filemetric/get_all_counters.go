@@ -1,3 +1,6 @@
+// Package filemetric предоставляет реализацию хранилища метрик в локальном хранилище.
+// Методы GetAllCounters возвращают все имеющиеся в файле counter-метрики
+// соответственно, в виде карт [имя_метрики]значение.
 package filemetric
 
 func (s *FileStorage) GetAllCounters() map[string]int64 {

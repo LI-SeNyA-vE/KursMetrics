@@ -1,3 +1,5 @@
+// Package filemetric предоставляет реализацию хранилища метрик в локальном хранилище.
+// saveToFile для сохранения в файл изменения метрик.
 package filemetric
 
 import (

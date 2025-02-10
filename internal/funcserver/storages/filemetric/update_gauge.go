@@ -1,3 +1,4 @@
+// Package filemetric предоставляет реализацию хранилища метрик в локальном хранилище.
 package filemetric
 
 func (s *FileStorage) UpdateGauge(name string, value float64) float64 {

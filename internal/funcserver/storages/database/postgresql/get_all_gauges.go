@@ -1,8 +1,6 @@
-/*
-Package postgresql содержит реализацию интерфейса MetricsStorage на базе PostgreSQL.
-Методы GetAllCounters и GetAllGauges возвращают все имеющиеся в базе counter- и gauge-метрики
-соответственно, в виде карт [имя_метрики]значение.
-*/
+// Package postgresql содержит реализацию интерфейса MetricsStorage на базе PostgreSQL.
+// Методы GetAllGauges возвращают все имеющиеся в базе gauge-метрики
+// соответственно, в виде карт [имя_метрики]значение.
 package postgresql
 
 // GetAllGauges выполняет запрос queryGetAllGauges к базе данных,

@@ -1,6 +1,8 @@
+// Package memorymetric предоставляет реализацию хранилища метрик в памяти.
+// Создаёт новый, экземпляра Metrictorage
 package memorymetric
 
-// Конструктор для создания нового экземпляра Metrictorage
+// NewMetricStorage Конструктор для создания нового экземпляра Metrictorage
 func NewMetricStorage() *MetricStorage {
 	return &MetricStorage{
 		gauge:   make(map[string]float64),
