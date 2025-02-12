@@ -2,10 +2,39 @@
 // Вся логика сбора и отправки метрик сосредоточена в пакете funcagent.
 package main
 
-import "github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent"
+import (
+	"fmt"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent"
+)
+
+var (
+	buildVersion string
+	buildDate    string
+	buildCommit  string
+)
 
 // main является точкой входа для бинарного файла агента.
 // Она вызывает функцию Run из пакета funcagent, где реализована основная логика работы агента.
 func main() {
 	funcagent.Run()
+}
+
+func version() {
+	if buildVersion != "" {
+		fmt.Println("Build version: " + buildVersion)
+	} else {
+		fmt.Println("Build version: N/A")
+	}
+
+	if buildDate != "" {
+		fmt.Println("Build date: " + buildDate)
+	} else {
+		fmt.Println("Build version: N/A")
+	}
+
+	if buildCommit != "" {
+		fmt.Println("Build commit: " + buildCommit)
+	} else {
+		fmt.Println("Build version: N/A")
+	}
 }
