@@ -15,6 +15,7 @@ var (
 
 // main является точкой входа для бинарного файла агента.
 // Она вызывает функцию Run из пакета funcagent, где реализована основная логика работы агента.
+// Пример вызова go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d %H:%M:%S')'" main.go
 func main() {
 	funcagent.Run()
 }
