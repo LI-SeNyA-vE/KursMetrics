@@ -21,6 +21,7 @@ type Server struct {
 	FlagRestore         bool   `env:"RESTORE"`
 	FlagDatabaseDsn     string `env:"DATABASE_DSN"`
 	FlagKey             string `env:"KEY"`
+	FlagCryptoKey       string `env:"CRYPTO_KEY"`
 }
 
 func NewConfigServer(log *logrus.Entry) *ConfigServer {
@@ -44,6 +45,7 @@ func (c *ConfigServer) newVarServerFlag() {
 		FlagRestore:         false,
 		FlagDatabaseDsn:     "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable",
 		FlagKey:             "",
+		FlagCryptoKey:       "rsaKeys/privateKey.pem", //
 	}
 
 	// Определение флагов
@@ -54,6 +56,7 @@ func (c *ConfigServer) newVarServerFlag() {
 	flag.BoolVar(&c.Server.FlagRestore, "r", c.Server.FlagRestore, "Определяет загружать или нет ранее сохранённые значения из указанного файла при старте сервера")
 	flag.StringVar(&c.Server.FlagDatabaseDsn, "d", c.Server.FlagDatabaseDsn, "Строка подключения к базе данных")
 	flag.StringVar(&c.Server.FlagKey, "k", c.Server.FlagKey, "Строка подключения к базе данных")
+	flag.StringVar(&c.Server.FlagCryptoKey, "crypto-rsaKeys", c.Server.FlagCryptoKey, "Путь до файла с приватным ключом")
 	// Парсинг флагов
 	flag.Parse()
 

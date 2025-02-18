@@ -15,6 +15,7 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/database/postgresql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/filemetric"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsaKey"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -40,11 +41,25 @@ func Run() {
 	// Инициализация логгера.
 	log := logger.NewLogger()
 
-	// Создаём конфиг из флагов и окружения.
+	// Создаём конфиг
 	cfgServer := servercfg.NewConfigServer(log)
+
+	//Парсим флаги и переменный окружения
 	cfgServer.InitializeServerConfig()
 
-	log.Info(cfgServer)
+	// Проверяем на наличие приватного ключа
+	if cfgServer.FlagCryptoKey != "" {
+		err = rsaKey.CheckKey(cfgServer.FlagCryptoKey)
+		if err != nil {
+			err = rsaKey.GenerateAndSaveKeys(cfgServer.FlagCryptoKey)
+			if err != nil {
+				log.Errorf("ошибка при создании пары ключей: %v", err)
+			} else {
+				log.Info("Успешно созданы пары ключей")
+			}
+			//TODO на агенте сделать горутинку, которая будет проверять правильность открытого ключа и если он не правильный, то кидать запросы на сервере на отправку открытого ключа и не выполнять никаких других действий пока не получит ключ
+		}
+	}
 
 	// Попытка подключения к БД PostgreSQL несколько раз.
 	for i := 0; i < 3; i++ {

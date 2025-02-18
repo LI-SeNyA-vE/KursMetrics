@@ -7,6 +7,7 @@ package funcagent
 import (
 	"context"
 	"fmt"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsaKey"
 
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/agentcfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/send"
@@ -48,16 +49,10 @@ func Run() {
 	// Инициализация конфига для Агента.
 	cfgAgent := agentcfg.NewConfigAgent(log)
 	cfgAgent.InitializeAgentConfig()
-
-	// Вывод части настроек для отладки.
-	log.Debugf("Адрес сервера: %s | Интервал отправки: %d | Интервал опроса: %d | Уровень логирования: %s | Key: %s | RateLimit: %d",
-		cfgAgent.FlagAddressAndPort,
-		cfgAgent.FlagReportInterval,
-		cfgAgent.FlagPollInterval,
-		cfgAgent.FlagLogLevel,
-		cfgAgent.FlagKey,
-		cfgAgent.FlagRateLimit,
-	)
+	err := rsaKey.CheckKey(cfgAgent.FlagCryptoKey)
+	if err != nil {
+		//TODO сделать горутинку, которая будет проверять правильность открытого ключа и если он не правильный, то кидать запросы на сервере на отправку открытого ключа и не выполнять никаких других действий пока не получит ключ
+	}
 
 	// Создаём общий контекст, который будет использован
 	// для управляемого завершения горутин (через cancel()).
@@ -180,7 +175,8 @@ func startWorkerPool(
 	var (
 		rateLimit  = cfg.FlagRateLimit
 		serverAddr = cfg.FlagAddressAndPort
-		key        = cfg.FlagKey
+		hashKey    = cfg.FlagKey
+		keyRsa     = cfg.FlagCryptoKey
 	)
 	if rateLimit < 1 {
 		rateLimit = 1
@@ -200,7 +196,7 @@ func startWorkerPool(
 					}
 					// Для отладки выводим размер очереди.
 					fmt.Printf("Запросов в очереди: %d", len(jobs))
-					send.SendBatchJSONMetrics(mData.gaugeMetrics, mData.counterMetrics, serverAddr, key)
+					send.SendBatchJSONMetrics(mData.gaugeMetrics, mData.counterMetrics, serverAddr, hashKey, keyRsa)
 				}
 			}
 		}(i)

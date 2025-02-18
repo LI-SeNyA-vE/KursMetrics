@@ -11,21 +11,14 @@ import (
 	"net/http"
 )
 
-// gzipWriter обёртывает http.ResponseWriter, заменяя операцию записи
-// на запись в Writer, который осуществляет gzip-сжатие.
-type gzipWriter struct {
-	http.ResponseWriter
-	Writer io.Writer
-}
-
-// GzipMiddleware проверяет, содержит ли запрос заголовок "Content-Encoding: gzip".
+// GunzipMiddleware проверяет, содержит ли запрос заголовок "Content-Encoding: gzip".
 // Если да, то r.Body декомпрессируется "на лету" с помощью gzip.NewReader,
 // и распакованные данные подставляются обратно в r.Body.
 // Затем управление передаётся следующему хендлеру в цепочке.
-func (m *Middleware) GzipMiddleware(next http.Handler) http.Handler {
+func (m *Middleware) GunzipMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Проверяем, запакован ли Body gzip'ом
-		if r.Header.Get("Content-Encoding") == "gzip" {
+		if r.Header.Get("Content-Encoding") == "gzip" || r.Header.Get("Content-Encoding") == "gzip, rsa-encrypted" {
 			gz, err := gzip.NewReader(r.Body)
 			if err != nil {
 				http.Error(w, "Ошибка при создании gzip.Reader", http.StatusInternalServerError)
@@ -39,10 +32,4 @@ func (m *Middleware) GzipMiddleware(next http.Handler) http.Handler {
 		// Вызываем следующий хендлер в цепочке
 		next.ServeHTTP(w, r)
 	})
-}
-
-// Write переопределяет метод записи для gzipWriter, направляя байты
-// в gzip-сжатый поток (w.Writer), вместо исходного ResponseWriter.
-func (w gzipWriter) Write(b []byte) (int, error) {
-	return w.Writer.Write(b)
 }

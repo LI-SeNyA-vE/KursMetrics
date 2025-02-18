@@ -19,6 +19,7 @@ type Agent struct {
 	FlagLogLevel       string `env:"LOG_LEVEL"`
 	FlagKey            string `env:"KEY"`
 	FlagRateLimit      int64  `env:"RATE_LIMIT"`
+	FlagCryptoKey      string `env:"CRYPTO_KEY"`
 }
 
 func NewConfigAgent(log *logrus.Entry) *ConfigAgent {
@@ -41,6 +42,7 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 		FlagLogLevel:       "debug",
 		FlagKey:            "",
 		FlagRateLimit:      1,
+		FlagCryptoKey:      "rsaKeys/publicKey.pem", //
 	}
 
 	// Определение флагов
@@ -50,6 +52,7 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 	flag.StringVar(&c.Agent.FlagLogLevel, "g", c.Agent.FlagLogLevel, "Уровень логирования")
 	flag.StringVar(&c.Agent.FlagKey, "k", c.Agent.FlagKey, "Строка подключения к базе данных")
 	flag.Int64Var(&c.Agent.FlagRateLimit, "l", c.Agent.FlagRateLimit, "Количество одновременно исходящих запросов на сервер")
+	flag.StringVar(&c.Agent.FlagCryptoKey, "crypto-rsaKeys", c.Agent.FlagCryptoKey, "Путь до файла с публичным ключом")
 	// Парсинг флагов
 	flag.Parse()
 
