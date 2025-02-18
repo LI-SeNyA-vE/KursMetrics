@@ -7,7 +7,7 @@ package funcagent
 import (
 	"context"
 	"fmt"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsaKey"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsakey"
 
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/agentcfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/send"
@@ -49,9 +49,10 @@ func Run() {
 	// Инициализация конфига для Агента.
 	cfgAgent := agentcfg.NewConfigAgent(log)
 	cfgAgent.InitializeAgentConfig()
-	err := rsaKey.CheckKey(cfgAgent.FlagCryptoKey)
+	err := rsakey.CheckKey(cfgAgent.FlagCryptoKey)
 	if err != nil {
 		//TODO сделать горутинку, которая будет проверять правильность открытого ключа и если он не правильный, то кидать запросы на сервере на отправку открытого ключа и не выполнять никаких других действий пока не получит ключ
+		log.Errorf("не найден ключ публичный ключ: %v", err)
 	}
 
 	// Создаём общий контекст, который будет использован

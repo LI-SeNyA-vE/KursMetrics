@@ -10,7 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsaKey"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsakey"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -43,7 +43,7 @@ func sendMetrics(client *resty.Client, url string, compressedData []byte, flagHa
 		request.SetHeader("Content-Encoding", "gzip, rsa-encrypted")
 		request.SetHeader("X-Encrypted-Hash", "true")
 
-		message, err := rsaKey.EncryptMessage(flagRsaKey, compressedData)
+		message, err := rsakey.EncryptMessage(flagRsaKey, compressedData)
 		if err != nil {
 			return nil, fmt.Errorf("ошибка при шифровании сообщения: %w", err)
 		}

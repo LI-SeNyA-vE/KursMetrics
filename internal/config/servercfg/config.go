@@ -45,7 +45,7 @@ func (c *ConfigServer) newVarServerFlag() {
 		FlagRestore:         false,
 		FlagDatabaseDsn:     "host=localhost dbname=postgres user=Senya password=1q2w3e4r5t sslmode=disable",
 		FlagKey:             "",
-		FlagCryptoKey:       "rsaKeys/privateKey.pem", //
+		FlagCryptoKey:       "", //rsaKeys/privateKey.pem
 	}
 
 	// Определение флагов

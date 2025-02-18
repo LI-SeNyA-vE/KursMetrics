@@ -1,4 +1,6 @@
-package rsaKey
+// Package rsakey содержит функции для шифровки/расшифровки запроса.
+// Шифрует/расшифровывает только необходимые данные для AES шифрования
+package rsakey
 
 import (
 	"crypto/rand"
@@ -9,11 +11,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"fmt"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/aesKey"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/aeskey"
 	"os"
 )
 
-// Функция шифрования сообщения
+// EncryptMessage Функция шифрования сообщения
 func EncryptMessage(publicKeyPath string, message []byte) ([]byte, error) {
 	keyData, err := os.ReadFile(publicKeyPath)
 	if err != nil {
@@ -37,7 +39,7 @@ func EncryptMessage(publicKeyPath string, message []byte) ([]byte, error) {
 	}
 
 	// Шифруем данные AES-256
-	ciphertext, nonce, keyAES, err := aesKey.EncryptMessage(message)
+	ciphertext, nonce, keyAES, err := aeskey.EncryptMessage(message)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка шифрования AES: %w", err)
 	}

@@ -1,4 +1,5 @@
-package aesKey
+// Package aeskey служит для шифровки расшифровки переданного сообщения
+package aeskey
 
 import (
 	"crypto/aes"
