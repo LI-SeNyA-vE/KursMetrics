@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsaKey"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -23,7 +24,7 @@ import (
 // Формирует запрос, добавляет заголовки "Content-Encoding: gzip" / "Accept-Encoding: gzip"
 // и при необходимости "HashSHA256" (если flagKey не пуст). Возвращает ответ сервера или ошибку,
 // если произошёл сбой запроса либо статус-код >= 400.
-func sendMetrics(client *resty.Client, url string, compressedData []byte, flagKey string) (interface{}, error) {
+func sendMetrics(client *resty.Client, url string, compressedData []byte, flagHashKey, flagRsaKey string) (interface{}, error) {
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
@@ -31,18 +32,29 @@ func sendMetrics(client *resty.Client, url string, compressedData []byte, flagKe
 		SetBody(compressedData)
 
 	// Если указан ключ, рассчитываем HMAC SHA256 по сжатым данным и устанавливаем в заголовок
-	if flagKey != "" {
-		h := hmac.New(sha256.New, []byte(flagKey))
+	if flagHashKey != "" {
+		h := hmac.New(sha256.New, []byte(flagHashKey))
 		h.Write(compressedData)
 		hash := hex.EncodeToString(h.Sum(nil))
 		request.SetHeader("HashSHA256", hash)
+	}
+
+	if flagRsaKey != "" {
+		request.SetHeader("Content-Encoding", "gzip, rsa-encrypted")
+		request.SetHeader("X-Encrypted-Hash", "true")
+
+		message, err := rsaKey.EncryptMessage(flagRsaKey, compressedData)
+		if err != nil {
+			return nil, fmt.Errorf("ошибка при шифровании сообщения: %w", err)
+		}
+		request.SetBody(message)
 	}
 
 	response, err := request.Post(url)
 
 	// Если произошла ошибка запроса или сервер вернул код >= 400, создаём и возвращаем ошибку
 	if err != nil || response.StatusCode() >= 400 {
-		return nil, fmt.Errorf(string(response.Body()), " ||| Флаг на агенте ", flagKey)
+		return nil, fmt.Errorf(string(response.Body()), "\n ошибка", err)
 	}
 
 	return response, nil

@@ -18,7 +18,7 @@ import (
 // преобразует в JSON, сжимает gzip'ом и делает POST-запрос на эндпоинт /updates/.
 // Если указано значение flagKey, добавляется HMAC SHA256.
 // В случае ошибок отправки использует повторные попытки (errorretriable).
-func SendBatchJSONMetrics(mapMetricGauge map[string]float64, mapMetricCounter map[string]int64, flagAddressAndPort string, flagKey string) {
+func SendBatchJSONMetrics(mapMetricGauge map[string]float64, mapMetricCounter map[string]int64, flagAddressAndPort string, flagHashKey, flagRsaKey string) {
 	client := resty.New()
 	url := fmt.Sprintf("http://%s/updates/", flagAddressAndPort)
 
@@ -58,7 +58,7 @@ func SendBatchJSONMetrics(mapMetricGauge map[string]float64, mapMetricCounter ma
 
 	// Пытаемся отправить с ретраями
 	_, err = errorretriable.ErrorRetriableHTTP(func() (interface{}, error) {
-		return sendMetrics(client, url, compressedData, flagKey)
+		return sendMetrics(client, url, compressedData, flagHashKey, flagRsaKey)
 	})
 
 	if err != nil {
@@ -66,7 +66,7 @@ func SendBatchJSONMetrics(mapMetricGauge map[string]float64, mapMetricCounter ma
 	} else {
 		log.Printf("Отправили метрики. Gauge=%d, Counter=%d\n",
 			len(mapMetricGauge),
-			len(mapMetricGauge),
+			len(mapMetricCounter),
 		)
 	}
 }

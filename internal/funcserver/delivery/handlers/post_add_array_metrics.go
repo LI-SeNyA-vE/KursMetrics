@@ -30,6 +30,7 @@ func (h *Handler) PostAddArrayMetrics(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(buf.Bytes(), &arrayMetrics) // Парсим массив метрик из JSON
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		h.log.Errorf("ошибка анмаршела переданного тела: %v", err.Error())
 		return
 	}
 

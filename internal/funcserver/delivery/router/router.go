@@ -41,8 +41,8 @@ func NewRouter(log *logrus.Entry, cfg servercfg.Server, storages storages.Metric
 //
 //   - LoggingMiddleware: логирование запросов (URI, статус, время);
 //   - HashSHA256: проверка HMAC SHA256, если ключ задан;
-//   - GzipMiddleware: распаковка входящих gzip-запросов;
-//   - UnGzipMiddleware: сжатие ответов при Accept-Encoding: gzip.
+//   - GunzipMiddleware: распаковка входящих gzip-запросов;
+//   - GzipMiddleware: сжатие ответов при Accept-Encoding: gzip.
 //
 // Затем маппит пути для разных действий:
 //
@@ -65,9 +65,10 @@ func (rout *Router) SetupRouter() {
 
 	// Подключаем middleware в цепочку
 	rout.Mux.Use(mw.LoggingMiddleware)
+	rout.Mux.Use(mw.RsaDecoder)
 	rout.Mux.Use(mw.HashSHA256)
+	rout.Mux.Use(mw.GunzipMiddleware)
 	rout.Mux.Use(mw.GzipMiddleware)
-	rout.Mux.Use(mw.UnGzipMiddleware)
 
 	// Регистрация хендлеров
 	rout.Mux.Post("/update/{typeMetric}/{nameMetric}/{countMetric}", hl.PostAddValue)
