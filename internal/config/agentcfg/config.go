@@ -42,7 +42,7 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 		FlagLogLevel:       "debug",
 		FlagKey:            "",
 		FlagRateLimit:      1,
-		FlagCryptoKey:      "rsaKeys/publicKey.pem", //
+		FlagCryptoKey:      "", //rsaKeys/publicKey.pem
 	}
 
 	// Определение флагов
