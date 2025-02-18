@@ -15,7 +15,7 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/database/postgresql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages/filemetric"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsaKey"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsakey"
 	"log"
 	"net/http"
 	_ "net/http/pprof"
@@ -49,9 +49,9 @@ func Run() {
 
 	// Проверяем на наличие приватного ключа
 	if cfgServer.FlagCryptoKey != "" {
-		err = rsaKey.CheckKey(cfgServer.FlagCryptoKey)
+		err = rsakey.CheckKey(cfgServer.FlagCryptoKey)
 		if err != nil {
-			err = rsaKey.GenerateAndSaveKeys(cfgServer.FlagCryptoKey)
+			err = rsakey.GenerateAndSaveKeys(cfgServer.FlagCryptoKey)
 			if err != nil {
 				log.Errorf("ошибка при создании пары ключей: %v", err)
 			} else {

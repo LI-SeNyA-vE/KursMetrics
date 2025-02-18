@@ -1,4 +1,6 @@
-package rsaKey
+// Package rsakey содержит функции для шифровки/расшифровки запроса.
+// Шифрует/расшифровывает только необходимые данные для AES шифрования
+package rsakey
 
 import (
 	"crypto/rand"
@@ -10,7 +12,7 @@ import (
 	"strings"
 )
 
-// Функция генерации и сохранения ключей
+// GenerateAndSaveKeys Функция генерации и сохранения ключей
 func GenerateAndSaveKeys(path string) error {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {

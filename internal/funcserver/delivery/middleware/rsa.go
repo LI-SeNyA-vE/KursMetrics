@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/aesKey"
-	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsaKey"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/aeskey"
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsakey"
 	"io"
 	"net/http"
 )
@@ -39,7 +39,7 @@ func (m *Middleware) RsaDecoder(h http.Handler) http.Handler {
 				}
 
 				// Расшифровываем AES-ключ через RSA
-				keyAES, err := rsaKey.DecryptMessage(m.FlagCryptoKey, encryptedAESKey)
+				keyAES, err := rsakey.DecryptMessage(m.FlagCryptoKey, encryptedAESKey)
 				if err != nil {
 					http.Error(w, "Ошибка расшифровки AES-ключа", http.StatusInternalServerError)
 					return
@@ -60,7 +60,7 @@ func (m *Middleware) RsaDecoder(h http.Handler) http.Handler {
 				}
 
 				// Декодируем сообщение Encrypted_Message через AES
-				message, err := aesKey.DecryptMessage(encryptedMessage, keyAES, nonce)
+				message, err := aeskey.DecryptMessage(encryptedMessage, keyAES, nonce)
 				if err != nil {
 					http.Error(w, "ошибка расшифровки переданного сообщения зашифрованного AES", http.StatusInternalServerError)
 					return

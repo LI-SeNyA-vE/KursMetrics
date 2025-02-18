@@ -1,4 +1,6 @@
-package rsaKey
+// Package rsakey содержит функции для шифровки/расшифровки запроса.
+// Шифрует/расшифровывает только необходимые данные для AES шифрования
+package rsakey
 
 import (
 	"crypto/rand"
@@ -9,7 +11,7 @@ import (
 	"fmt"
 )
 
-// Функция дешифрования сообщения
+// DecryptMessage Функция дешифрования сообщения
 func DecryptMessage(pathPrivateKeyPath string, ciphertext []byte) ([]byte, error) {
 	keyData, err := loadKey(pathPrivateKeyPath)
 	if err != nil {
