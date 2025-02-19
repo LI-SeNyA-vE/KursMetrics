@@ -87,11 +87,11 @@ func (c *ConfigServer) newVarServerFlag() {
 	if pathConfig != "" {
 		configFile, err := os.ReadFile(pathConfig)
 		if err != nil {
-			c.log.Errorf("ошибка чтения конфигурационного файла: %w", err)
+			c.log.Errorf("ошибка чтения конфигурационного файла: %v", err)
 		} else {
 			err = json.Unmarshal(configFile, &configFlag)
 			if err != nil {
-				c.log.Errorf("ошибка парсинга JSON конфигурационного файла: %w", err)
+				c.log.Errorf("ошибка парсинга JSON конфигурационного файла: %v", err)
 			}
 		}
 	}
