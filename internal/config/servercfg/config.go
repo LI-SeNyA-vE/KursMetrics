@@ -105,6 +105,24 @@ func (c *ConfigServer) newVarServerFlag() {
 // setConfigValue - Функция установки значений с приоритетом (флаг -> env -> config -> default)
 func setConfigValue(flagValue, envValue, configValue, defaultValue interface{}) (interface{}, string) {
 	if flagValue != nil {
+
+		if envValue != nil {
+			switch v := envValue.(type) {
+			case string:
+				if v != "" {
+					return v, "переменной окружения"
+				}
+			case int64:
+				if v != 0 {
+					return v, "переменной окружения"
+				}
+			case bool:
+				if v {
+					return v, "переменной окружения"
+				}
+			}
+		}
+
 		switch v := flagValue.(type) {
 		case string:
 			if v != "" {
@@ -117,23 +135,6 @@ func setConfigValue(flagValue, envValue, configValue, defaultValue interface{}) 
 		case bool:
 			if v {
 				return v, "флага установленного в консоли"
-			}
-		}
-	}
-
-	if envValue != nil {
-		switch v := envValue.(type) {
-		case string:
-			if v != "" {
-				return v, "переменной окружения"
-			}
-		case int64:
-			if v != 0 {
-				return v, "переменной окружения"
-			}
-		case bool:
-			if v {
-				return v, "переменной окружения"
 			}
 		}
 	}

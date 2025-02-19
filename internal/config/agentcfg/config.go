@@ -100,23 +100,6 @@ func (c *ConfigAgent) newAgentFlag() Agent {
 
 // setConfigValue - Функция установки значений с приоритетом (флаг -> env -> config -> default)
 func setConfigValue(flagValue, envValue, configValue, defaultValue interface{}) (interface{}, string) {
-	if flagValue != nil {
-		switch v := flagValue.(type) {
-		case string:
-			if v != "" {
-				return v, "флага установленного в консоли"
-			}
-		case int64:
-			if v != 0 {
-				return v, "флага установленного в консоли"
-			}
-		case bool:
-			if v {
-				return v, "флага установленного в консоли"
-			}
-		}
-	}
-
 	if envValue != nil {
 		switch v := envValue.(type) {
 		case string:
@@ -130,6 +113,23 @@ func setConfigValue(flagValue, envValue, configValue, defaultValue interface{}) 
 		case bool:
 			if v {
 				return v, "переменной окружения"
+			}
+		}
+	}
+
+	if flagValue != nil {
+		switch v := flagValue.(type) {
+		case string:
+			if v != "" {
+				return v, "флага установленного в консоли"
+			}
+		case int64:
+			if v != 0 {
+				return v, "флага установленного в консоли"
+			}
+		case bool:
+			if v {
+				return v, "флага установленного в консоли"
 			}
 		}
 	}
