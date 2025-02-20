@@ -8,6 +8,7 @@ Package funcserver реализует логику сервера в проек�
 package funcserver
 
 import (
+	"context"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/servercfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/router"
@@ -19,6 +20,10 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 )
 
@@ -29,6 +34,7 @@ import (
 func Run() {
 	var err error
 	var storage storages.MetricsStorage
+	var wg sync.WaitGroup
 
 	// Запуск pprof на localhost:6060 для профилирования.
 	go func() {
@@ -92,10 +98,35 @@ func Run() {
 	r := router.NewRouter(log, cfgServer.Server, storage)
 	r.SetupRouter()
 
-	// Запуск HTTP-сервера на сконфигурированном адресе.
-	log.Info("Открыт сервер ", cfgServer.FlagAddressAndPort)
-	err = http.ListenAndServe(cfgServer.FlagAddressAndPort, r.Mux)
-	if err != nil {
-		panic(err)
+	server := &http.Server{
+		Addr:    cfgServer.FlagAddressAndPort,
+		Handler: r.Mux,
 	}
+
+	go func() {
+		handleSignals(server)
+	}()
+
+	// Запуск HTTP-сервера на сконфигурированном адресе.
+	log.Info("Открыт сервер на ", cfgServer.FlagAddressAndPort)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("Ошибка сервера: %v", err)
+	}
+
+	wg.Wait()
+}
+
+func handleSignals(server *http.Server) {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	<-signalChan
+	fmt.Println("Сервер: получен сигнал завершения, завершаем работу...")
+
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("Ошибка при завершении сервера: %v", err)
+	}
+	fmt.Println("Сервер: завершение работы успешно.")
 }
