@@ -8,6 +8,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsakey"
+	"github.com/sirupsen/logrus"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/agentcfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/send"
@@ -39,9 +43,10 @@ type MetricData struct {
 // Для остановки может быть использован контекст (ctx) с cancel().
 func Run() {
 	var metricData MetricData
+	var mu sync.Mutex
+	var wg sync.WaitGroup
 	metricData.gaugeMetrics = make(map[string]float64)
 	metricData.counterMetrics = make(map[string]int64)
-	var mu sync.Mutex
 
 	// Инициализация логгера.
 	log := logger.NewLogger()
@@ -49,6 +54,7 @@ func Run() {
 	// Инициализация конфига для Агента.
 	cfgAgent := agentcfg.NewConfigAgent(log)
 	cfgAgent.InitializeAgentConfig()
+
 	err := rsakey.CheckKey(cfgAgent.FlagCryptoKey)
 	if err != nil {
 		//TODO сделать горутинку, которая будет проверять правильность открытого ключа и если он не правильный, то кидать запросы на сервере на отправку открытого ключа и не выполнять никаких других действий пока не получит ключ
@@ -61,106 +67,25 @@ func Run() {
 	defer cancel()
 
 	// jobs — канал, куда будут поступать "задания" (снимки метрик) для отправки.
-	jobs := make(chan MetricData)
+	jobs := make(chan MetricData, 1)
 
 	// Запускаем пул воркеров, который будет отправлять метрики (SendBatchJSONMetrics).
-	var wg sync.WaitGroup
 	startWorkerPool(ctx, &wg, jobs, *cfgAgent, log)
 
 	// Горутина опроса runtime-метрик каждые FlagPollInterval секунд.
-	go func() {
-		ticker := time.NewTicker(time.Duration(cfgAgent.FlagPollInterval) * time.Second)
-		defer ticker.Stop()
-
-		for {
-			select {
-			case <-ticker.C:
-				runtimeGauge, runtimeCounter := update.UpdateMetric()
-
-				// Синхронизируем доступ к shared-структуре metricData.
-				mu.Lock()
-				for name, value := range runtimeGauge {
-					metricData.gaugeMetrics[name] = value
-				}
-				for name, value := range runtimeCounter {
-					metricData.counterMetrics[name] = value
-				}
-				mu.Unlock()
-
-				log.Info("Собрали метрики runtime")
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
+	go collectRuntimeMetrics(ctx, &metricData, &mu, cfgAgent, log)
 
 	// Горутина опроса системных метрик (через gopsutil) каждые FlagPollInterval секунд.
-	go func() {
-		ticker := time.NewTicker(time.Duration(cfgAgent.FlagPollInterval) * time.Second)
-		defer ticker.Stop()
-
-		gaugeMetrics := make(map[string]float64)
-
-		for {
-			select {
-			case <-ticker.C:
-				if vmStat, err := mem.VirtualMemory(); err == nil {
-					gaugeMetrics["TotalMemory"] = float64(vmStat.Total)
-					gaugeMetrics["FreeMemory"] = float64(vmStat.Free)
-				}
-				if cpuPercent, err := cpu.Percent(0, false); err == nil {
-					gaugeMetrics["CPUutilization1"] = cpuPercent[0]
-				}
-
-				mu.Lock()
-				for name, value := range gaugeMetrics {
-					metricData.gaugeMetrics[name] = value
-				}
-				mu.Unlock()
-
-				log.Info("Собрали метрики gopsutil")
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
+	go collectSystemMetrics(ctx, &metricData, &mu, cfgAgent, log)
 
 	// Горутина, формирующая каждые FlagReportInterval секунд "снимок" метрик
 	// и отправляющая его в канал jobs для асинхронной отправки.
-	go func() {
-		ticker := time.NewTicker(time.Duration(cfgAgent.FlagReportInterval) * time.Second)
-		defer ticker.Stop()
+	go reportMetrics(ctx, &metricData, &mu, jobs, cfgAgent)
 
-		for {
-			select {
-			case <-ticker.C:
-				mu.Lock()
-				gauge := copyGauge(metricData.gaugeMetrics)
-				counter := copyCounter(metricData.counterMetrics)
-				mu.Unlock()
+	// Горутина проверяющая на вызов сигнала
+	go handleSignals(cancel, &wg, jobs, &metricData, &mu)
 
-				jobs <- MetricData{
-					gaugeMetrics:   gauge,
-					counterMetrics: counter,
-				}
-
-				fmt.Printf("Послали job на отправку. Gauge=%d, Counter=%d, запросов в очереди: %d\n",
-					len(gauge),
-					len(counter),
-					len(jobs),
-				)
-
-				// Обнуление локального накопления, если нужно отслеживать "прирост".
-				metricData.gaugeMetrics = make(map[string]float64)
-				metricData.counterMetrics = make(map[string]int64)
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-
-	// select{} — чтобы функция Run не завершалась сама по себе.
-	select {}
+	wg.Wait()
 }
 
 // startWorkerPool запускает несколько горутин-воркеров, количество которых
@@ -202,6 +127,111 @@ func startWorkerPool(
 			}
 		}(i)
 	}
+}
+
+func collectRuntimeMetrics(ctx context.Context, metricData *MetricData, mu *sync.Mutex, cfgAgent *agentcfg.ConfigAgent, log *logrus.Entry) {
+	ticker := time.NewTicker(time.Duration(cfgAgent.FlagPollInterval) * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			runtimeGauge, runtimeCounter := update.UpdateMetric()
+			mu.Lock()
+			for name, value := range runtimeGauge {
+				metricData.gaugeMetrics[name] = value
+			}
+			for name, value := range runtimeCounter {
+				metricData.counterMetrics[name] = value
+			}
+			mu.Unlock()
+			log.Info("Собрали метрики runtime")
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func collectSystemMetrics(ctx context.Context, metricData *MetricData, mu *sync.Mutex, cfgAgent *agentcfg.ConfigAgent, log *logrus.Entry) {
+	ticker := time.NewTicker(time.Duration(cfgAgent.FlagPollInterval) * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			gaugeMetrics := make(map[string]float64)
+			if vmStat, err := mem.VirtualMemory(); err == nil {
+				gaugeMetrics["TotalMemory"] = float64(vmStat.Total)
+				gaugeMetrics["FreeMemory"] = float64(vmStat.Free)
+			}
+			if cpuPercent, err := cpu.Percent(0, false); err == nil {
+				gaugeMetrics["CPUutilization1"] = cpuPercent[0]
+			}
+			mu.Lock()
+			for name, value := range gaugeMetrics {
+				metricData.gaugeMetrics[name] = value
+			}
+			mu.Unlock()
+			log.Info("Собрали метрики gopsutil")
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func reportMetrics(ctx context.Context, metricData *MetricData, mu *sync.Mutex, jobs chan<- MetricData, cfgAgent *agentcfg.ConfigAgent) {
+	ticker := time.NewTicker(time.Duration(cfgAgent.FlagReportInterval) * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			mu.Lock()
+			gauge := copyGauge(metricData.gaugeMetrics)
+			counter := copyCounter(metricData.counterMetrics)
+			mu.Unlock()
+
+			jobs <- MetricData{
+				gaugeMetrics:   gauge,
+				counterMetrics: counter,
+			}
+
+			fmt.Printf("Послали job на отправку. Gauge=%d, Counter=%d, запросов в очереди: %d\n",
+				len(gauge),
+				len(counter),
+				len(jobs),
+			)
+
+			// Обнуление локального накопления, если нужно отслеживать "прирост".
+			metricData.gaugeMetrics = make(map[string]float64)
+			metricData.counterMetrics = make(map[string]int64)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
+func handleSignals(cancel context.CancelFunc, wg *sync.WaitGroup, jobs chan MetricData, metricData *MetricData, mu *sync.Mutex) {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
+	<-signalChan
+	fmt.Println("Агент: получен сигнал завершения, передаем оставшиеся данные...")
+	flushPendingMetrics(jobs, metricData, mu)
+	cancel()
+	close(jobs)
+	wg.Wait()
+	fmt.Println("Агент: завершение работы успешно.")
+}
+
+func flushPendingMetrics(jobs chan MetricData, metricData *MetricData, mu *sync.Mutex) {
+	mu.Lock()
+	deferredMetrics := MetricData{
+		gaugeMetrics:   copyGauge(metricData.gaugeMetrics),
+		counterMetrics: copyCounter(metricData.counterMetrics),
+	}
+	mu.Unlock()
+	jobs <- deferredMetrics
+	fmt.Println("Агент: успешно передал несохранённые данные перед завершением.")
 }
 
 // copyGauge создаёт копию переданной карты gauge-метрик, чтобы
