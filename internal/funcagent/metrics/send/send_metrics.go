@@ -11,7 +11,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsakey"
-
+	"github.com/LI-SeNyA-vE/KursMetrics/pkg/utils/ipandcidr"
 	"github.com/go-resty/resty/v2"
 )
 
@@ -25,10 +25,12 @@ import (
 // и при необходимости "HashSHA256" (если flagKey не пуст). Возвращает ответ сервера или ошибку,
 // если произошёл сбой запроса либо статус-код >= 400.
 func sendMetrics(client *resty.Client, url string, compressedData []byte, flagHashKey, flagRsaKey string) (interface{}, error) {
+
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
 		SetHeader("Accept-Encoding", "gzip").
+		SetHeader("X-Real-IP", ipandcidr.GetLocalIP()).
 		SetBody(compressedData)
 
 	// Если указан ключ, рассчитываем HMAC SHA256 по сжатым данным и устанавливаем в заголовок
