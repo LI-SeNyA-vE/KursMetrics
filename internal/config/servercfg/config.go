@@ -26,6 +26,7 @@ type Server struct {
 	FlagKey             string `env:"KEY"`
 	FlagCryptoKey       string `env:"CRYPTO_KEY" json:"crypto_key"`
 	FlagConfig          string `env:"CONFIG"`
+	FlagTrustedSubnet   string `env:"TRUSTED_SUBNET" json:"trusted_subnet"`
 }
 
 func NewConfigServer(log *logrus.Entry) *ConfigServer {
@@ -73,6 +74,7 @@ func (c *ConfigServer) newVarServerFlag() {
 	flag.StringVar(&flagParse.FlagCryptoKey, "crypto-rsaKeys", c.Server.FlagCryptoKey, "Путь до файла с приватным ключом")
 	flag.StringVar(&flagParse.FlagConfig, "c", flagParse.FlagConfig, "Путь к конфигурационному файлу")
 	flag.StringVar(&flagParse.FlagConfig, "config", flagParse.FlagConfig, "Путь к конфигурационному файлу")
+	flag.StringVar(&flagParse.FlagTrustedSubnet, "t", flagParse.FlagTrustedSubnet, "Строковое представление бесклассовой адресации (CIDR)")
 	flag.Parse()
 
 	configFlag := Server{}
@@ -102,27 +104,26 @@ func (c *ConfigServer) newVarServerFlag() {
 	fmt.Printf("%v", c.Server)
 }
 
-// setConfigValue - Функция установки значений с приоритетом (флаг -> env -> config -> default)
+// setConfigValue - Функция установки значений с приоритетом (env -> флаг -> config -> default)
 func setConfigValue(flagValue, envValue, configValue, defaultValue interface{}) (interface{}, string) {
-	if flagValue != nil {
-
-		if envValue != nil {
-			switch v := envValue.(type) {
-			case string:
-				if v != "" {
-					return v, "переменной окружения"
-				}
-			case int64:
-				if v != 0 {
-					return v, "переменной окружения"
-				}
-			case bool:
-				if v {
-					return v, "переменной окружения"
-				}
+	if envValue != nil {
+		switch v := envValue.(type) {
+		case string:
+			if v != "" {
+				return v, "переменной окружения"
+			}
+		case int64:
+			if v != 0 {
+				return v, "переменной окружения"
+			}
+		case bool:
+			if v {
+				return v, "переменной окружения"
 			}
 		}
+	}
 
+	if flagValue != nil {
 		switch v := flagValue.(type) {
 		case string:
 			if v != "" {
@@ -201,4 +202,9 @@ func (c *ConfigServer) setConfigServerValue(flagParse, envParse, configFlag, fla
 	flagValue, flagName = setConfigValue(flagParse.FlagConfig, envParse.FlagConfig, configFlag.FlagConfig, flagDefault.FlagConfig)
 	c.Server.FlagConfig = flagValue.(string)
 	c.log.Infof("Значение для FlagConfig было взято из %s", flagName)
+
+	flagValue, flagName = setConfigValue(flagParse.FlagTrustedSubnet, envParse.FlagTrustedSubnet, configFlag.FlagTrustedSubnet, flagDefault.FlagTrustedSubnet)
+	c.Server.FlagTrustedSubnet = flagValue.(string)
+	c.log.Infof("Значение для FlagConfig было взято из %s", flagName)
+
 }

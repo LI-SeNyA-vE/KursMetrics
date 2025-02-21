@@ -65,6 +65,9 @@ func (rout *Router) SetupRouter() {
 
 	// Подключаем middleware в цепочку
 	rout.Mux.Use(mw.LoggingMiddleware)
+	if rout.Server.FlagTrustedSubnet != "" {
+		rout.Mux.Use(mw.TrustedSubnet)
+	}
 	rout.Mux.Use(mw.RsaDecoder)
 	rout.Mux.Use(mw.HashSHA256)
 	rout.Mux.Use(mw.GunzipMiddleware)
