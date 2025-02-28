@@ -7,6 +7,7 @@ package postgresql
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 )
 
@@ -18,7 +19,7 @@ func (d *DataBase) GetGauge(name string) (*float64, error) {
 	query := queryGetGauge
 
 	err := d.db.QueryRow(query, name).Scan(&value)
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		return nil, fmt.Errorf("gauge %q not found", name)
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to query gauge %q: %w", name, err)

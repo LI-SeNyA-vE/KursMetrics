@@ -8,7 +8,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
 	"net/http"
 )
 

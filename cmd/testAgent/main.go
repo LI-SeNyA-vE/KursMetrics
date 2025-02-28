@@ -1,6 +1,6 @@
 package main
 
-import "github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/send"
+import "github.com/LI-SeNyA-vE/KursMetrics/internal/agent/metrics/send"
 
 var (
 	mapMetricGauge     map[string]float64 = map[string]float64{}
@@ -13,5 +13,5 @@ var (
 func main() {
 	mapMetricGauge["test_gauge"] = 1.4
 	mapMetricCounter["test_count"] = 1
-	send.SendBatchJSONMetrics(mapMetricGauge, mapMetricCounter, flagAddressAndPort, flagHashKey, flagRsaKey)
+	send.SendBatchJSONMetricsHTTP(mapMetricGauge, mapMetricCounter, flagAddressAndPort, flagHashKey, flagRsaKey)
 }

@@ -9,9 +9,9 @@ package router
 
 import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/servercfg"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/handlers"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/delivery/middleware"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/http/handlers"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/http/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 )
@@ -51,8 +51,6 @@ func NewRouter(log *logrus.Entry, cfg servercfg.Server, storages storages.Metric
 //   - POST /update/ — обновление метрики в JSON-формате.
 //   - POST /updates/ — обновление массива метрик (batch).
 //   - GET /value/{typeMetric}/{nameMetric} — получение метрики по URL.
-//   - GET /ping — вывод всех метрик (в данном случае роут переопределён дважды: для вывода метрик
-//     и проверки БД, но конечный хендлер тот же / см. комментарий в коде).
 //   - GET / — вывод всех метрик.
 //   - GET /ping — проверка состояния БД.
 //
@@ -79,7 +77,6 @@ func (rout *Router) SetupRouter() {
 	rout.Mux.Post("/update/", hl.JSONUpdate)
 	rout.Mux.Post("/updates/", hl.PostAddArrayMetrics)
 	rout.Mux.Get("/value/{typeMetric}/{nameMetric}", hl.GetReceivingMetric)
-	rout.Mux.Get("/ping", hl.GetReceivingAllMetric) // Похоже, используется для вывода метрик
 	rout.Mux.Get("/", hl.GetReceivingAllMetric)
 	rout.Mux.Get("/ping", hl.Ping) // Похоже, второй роут /ping для проверки БД
 }

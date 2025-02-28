@@ -6,7 +6,7 @@ package handlers
 
 import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/servercfg"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
 	"github.com/sirupsen/logrus"
 )
 

@@ -19,7 +19,7 @@ var timeDelay = [3]time.Duration{1, 1, 1}
 // последняя ошибка, если она не была устранена.
 //
 // Возвращает:
-//   - interface{} — результат успешного вызова inputFunc,
+//   - interface{} — результат успешного вызова inputFunc
 //   - error — если не удалось выполнить без ошибки за заданное число повторов.
 func ErrorRetriableHTTP(inputFunc func() (interface{}, error)) (interface{}, error) {
 	var result interface{}

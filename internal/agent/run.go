@@ -1,8 +1,8 @@
-// Package funcagent реализует логику работы Агента (Agent) в проекте KursMetrics.
+// Package agent реализует логику работы Агента (Agent) в проекте KursMetrics.
 // В этом пакете происходит сбор метрик (через runtime и gopsutil) и регулярная
 // отправка их на сервер по заданному адресу. Работа организована посредством
 // нескольких горутин и ограниченного пула воркеров (Worker Pool).
-package funcagent
+package agent
 
 import (
 	"context"
@@ -13,9 +13,9 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/agent/metrics/send"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/agent/metrics/update"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/agentcfg"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/send"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent/metrics/update"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	"github.com/shirou/gopsutil/cpu"
 	"github.com/shirou/gopsutil/mem"
@@ -69,7 +69,7 @@ func Run() {
 	// jobs — канал, куда будут поступать "задания" (снимки метрик) для отправки.
 	jobs := make(chan MetricData, 1)
 
-	// Запускаем пул воркеров, который будет отправлять метрики (SendBatchJSONMetrics).
+	// Запускаем пул воркеров, который будет отправлять метрики (SendBatchJSONMetricsHTTP).
 	startWorkerPool(ctx, &wg, jobs, *cfgAgent, log)
 
 	// Горутина опроса runtime-метрик каждые FlagPollInterval секунд.
@@ -90,7 +90,7 @@ func Run() {
 
 // startWorkerPool запускает несколько горутин-воркеров, количество которых
 // определяется параметром rateLimit (если < 1, то ставится 1).
-// Каждый воркер берёт MetricData из канала jobs и вызывает SendBatchJSONMetrics.
+// Каждый воркер берёт MetricData из канала jobs и вызывает SendBatchJSONMetricsHTTP.
 func startWorkerPool(
 	ctx context.Context,
 	wg *sync.WaitGroup,
@@ -122,7 +122,8 @@ func startWorkerPool(
 					}
 					// Для отладки выводим размер очереди.
 					fmt.Printf("Запросов в очереди: %d", len(jobs))
-					send.SendBatchJSONMetrics(mData.gaugeMetrics, mData.counterMetrics, serverAddr, hashKey, keyRsa)
+					//send.SendBatchJSONMetricsHTTP() или SendBatchJSONMetricsRPC()
+					send.SendBatchJSONMetricsRPC(mData.gaugeMetrics, mData.counterMetrics, serverAddr, hashKey, keyRsa)
 				}
 			}
 		}(i)
@@ -241,6 +242,7 @@ func copyGauge(src map[string]float64) map[string]float64 {
 	for k, v := range src {
 		dst[k] = v
 	}
+
 	return dst
 }
 

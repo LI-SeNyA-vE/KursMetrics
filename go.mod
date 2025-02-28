@@ -1,6 +1,8 @@
 module github.com/LI-SeNyA-vE/KursMetrics
 
-go 1.22.1
+go 1.23.0
+
+toolchain go1.23.2
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
@@ -12,6 +14,8 @@ require (
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/tools v0.29.0
+	google.golang.org/grpc v1.70.0
+	google.golang.org/protobuf v1.36.5
 	honnef.co/go/tools v0.5.1
 )
 
@@ -37,4 +41,5 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20231108232855-2478ac86f678 // indirect
 	golang.org/x/mod v0.22.0 // indirect
 	golang.org/x/net v0.34.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241202173237-19429a94021a // indirect
 )
