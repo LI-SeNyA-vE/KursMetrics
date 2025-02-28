@@ -1,8 +1,6 @@
 module github.com/LI-SeNyA-vE/KursMetrics
 
-go 1.23.0
-
-toolchain go1.23.2
+go 1.22.5
 
 require (
 	github.com/caarlos0/env/v6 v6.10.1
