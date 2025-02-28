@@ -8,7 +8,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver/storages"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
 	"net/http"
 )
 
@@ -16,7 +16,7 @@ import (
 // в структуру storages.Metrics. В зависимости от поля MType (gauge/counter)
 // обновляет соответствующую метрику в хранилище. Затем формирует ответ
 // также в формате JSON с актуальным значением обновлённой метрики. Если тип
-// не распознан (не gauge и не counter), вернёт статус 400 (Bad Request).
+// нераспознан (не gauge и не counter), вернёт статус 400 (Bad Request).
 func (h *Handler) JSONUpdate(w http.ResponseWriter, r *http.Request) {
 	var metrics storages.Metrics
 	var buf bytes.Buffer

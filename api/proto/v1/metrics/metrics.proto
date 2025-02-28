@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package metrics.v1;
+
+option go_package = "KursMetrics/api/proto/v1/metrics";
+
+// Определение сервиса для работы с метриками
+service MetricsService {
+  // Метод для отправки одной метрики
+  rpc SendMetric (SendMetricRequest) returns (SendMetricResponse);
+
+  // Метод для отправки нескольких метрик (batch)
+  rpc SendBatchMetrics (BatchMetricsRequest) returns (BatchMetricsResponse);
+
+  // Метод для получения метрики по имени
+  rpc GetMetric (GetMetricRequest) returns (GetMetricResponse);
+
+  // Метод для получения всех метрик
+  rpc GetAllMetrics (Empty) returns (AllMetricsResponse);
+}
+
+// Определяем возможные типы метрик
+enum MetricType {
+  UNKNOWN = 0;  // Всегда должен быть 0-значение (по умолчанию)
+  GAUGE = 1;    // Только тип float64
+  COUNTER = 2;  // Только тип int64
+}
+
+// Структура запроса для одной метрики
+message Metric {
+  string id = 1;
+  MetricType type = 2;      // Тип метрики (GAUGE / COUNTER)
+  optional int64 delta = 3;  // Используется для counter
+  optional double value = 4; // Используется для gauge
+}
+
+// Запрос отправки одной метрики
+message SendMetricRequest{
+  Metric metric = 1;
+}
+
+// Ответ отправки одной метрики
+message SendMetricResponse {
+  string err = 1;
+}
+
+// Запроса для отправки нескольких метрик
+message BatchMetricsRequest {
+  repeated Metric metrics = 1;
+}
+
+// Ответ отправки нескольких метрик
+message BatchMetricsResponse {
+  string err = 1;
+}
+
+// Запрос для получения метрики по имени и типу
+message GetMetricRequest {
+  string id = 1;
+  MetricType type = 2;
+}
+
+// Ответ с метрикой по имени и типу
+message GetMetricResponse {
+  Metric metric = 1;
+  string err = 2;
+}
+
+// Запрос (пустое сообщение) для получения всех метрик
+message Empty {}
+
+// Ответ с полным списком метрик
+message AllMetricsResponse {
+  repeated Metric metrics = 1;
+  string err = 2;
+}

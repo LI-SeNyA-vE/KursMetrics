@@ -24,8 +24,7 @@ import (
 // Формирует запрос, добавляет заголовки "Content-Encoding: gzip" / "Accept-Encoding: gzip"
 // и при необходимости "HashSHA256" (если flagKey не пуст). Возвращает ответ сервера или ошибку,
 // если произошёл сбой запроса либо статус-код >= 400.
-func sendMetrics(client *resty.Client, url string, compressedData []byte, flagHashKey, flagRsaKey string) (interface{}, error) {
-
+func sendMetricsHTTP(client *resty.Client, url string, compressedData []byte, flagHashKey, flagRsaKey string) error {
 	request := client.R().
 		SetHeader("Content-Type", "application/json").
 		SetHeader("Content-Encoding", "gzip").
@@ -47,7 +46,7 @@ func sendMetrics(client *resty.Client, url string, compressedData []byte, flagHa
 
 		message, err := rsakey.EncryptMessage(flagRsaKey, compressedData)
 		if err != nil {
-			return nil, fmt.Errorf("ошибка при шифровании сообщения: %w", err)
+			return fmt.Errorf("ошибка при шифровании сообщения: %w", err)
 		}
 		request.SetBody(message)
 	}
@@ -56,8 +55,8 @@ func sendMetrics(client *resty.Client, url string, compressedData []byte, flagHa
 
 	// Если произошла ошибка запроса или сервер вернул код >= 400, создаём и возвращаем ошибку
 	if err != nil || response.StatusCode() >= 400 {
-		return nil, fmt.Errorf(string(response.Body()), "\n ошибка", err)
+		return fmt.Errorf(string(response.Body()), "\n ошибка", err)
 	}
 
-	return response, nil
+	return nil
 }

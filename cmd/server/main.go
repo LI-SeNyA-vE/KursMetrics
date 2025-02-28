@@ -1,10 +1,10 @@
 // Package main запускает сервер, который принимает, хранит и предоставляет метрики.
-// Вся логика «серверной» части проекта расположена в пакете funcserver.
+// Вся логика «серверной» части проекта расположена в пакете server.
 package main
 
 import (
 	"fmt"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcserver"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server"
 	_ "github.com/jackc/pgx/v5/stdlib" // Импорт драйвера PostgreSQL через pgx
 )
 
@@ -15,12 +15,12 @@ var (
 )
 
 // main является точкой входа для запуска сервера (Server).
-// Он вызывает funcserver.Run(), где реализована вся основная логика принятия и хранения метрик,
+// Он вызывает server.Run(), где реализована вся основная логика принятия и хранения метрик,
 // а также инициализация и запуск HTTP-сервера.
 // Пример вызова go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d %H:%M:%S')'" main.go
 func main() {
 	version()
-	funcserver.Run()
+	server.Run()
 }
 
 func version() {

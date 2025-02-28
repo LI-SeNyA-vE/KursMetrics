@@ -1,10 +1,10 @@
 // Package main запускает агент, который собирает метрики и отправляет их на сервер.
-// Вся логика сбора и отправки метрик сосредоточена в пакете funcagent.
+// Вся логика сбора и отправки метрик сосредоточена в пакете agent.
 package main
 
 import (
 	"fmt"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/funcagent"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/agent"
 )
 
 var (
@@ -14,11 +14,11 @@ var (
 )
 
 // main является точкой входа для бинарного файла агента.
-// Она вызывает функцию Run из пакета funcagent, где реализована основная логика работы агента.
+// Она вызывает функцию Run из пакета agent, где реализована основная логика работы агента.
 // Пример вызова go run -ldflags "-X main.buildVersion=v1.0.1 -X 'main.buildDate=$(date +'%Y/%m/%d %H:%M:%S')'" main.go
 func main() {
 	version()
-	funcagent.Run()
+	agent.Run()
 }
 
 func version() {
