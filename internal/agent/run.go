@@ -123,7 +123,7 @@ func startWorkerPool(
 					// Для отладки выводим размер очереди.
 					fmt.Printf("Запросов в очереди: %d", len(jobs))
 					//send.SendBatchJSONMetricsHTTP() или SendBatchJSONMetricsRPC()
-					send.SendBatchJSONMetricsRPC(mData.gaugeMetrics, mData.counterMetrics, serverAddr, hashKey, keyRsa)
+					send.SendBatchJSONMetricsHTTP(mData.gaugeMetrics, mData.counterMetrics, serverAddr, hashKey, keyRsa)
 				}
 			}
 		}(i)

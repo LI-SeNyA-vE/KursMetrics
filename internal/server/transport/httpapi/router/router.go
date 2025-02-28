@@ -10,8 +10,8 @@ package router
 import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/servercfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/http/handlers"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/http/middleware"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/httpapi/handlers"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/httpapi/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/sirupsen/logrus"
 )

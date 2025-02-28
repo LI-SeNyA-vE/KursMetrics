@@ -7,7 +7,7 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/logger"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages/memorymetric"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/http/handlers"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/httpapi/handlers"
 	"net/http"
 	"net/http/httptest"
 	"testing"

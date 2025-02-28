@@ -1,5 +1,5 @@
 // Package rpc реализовывает функцию старта HTTP сервера
-package http
+package httpapi
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/config/servercfg"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/http/router"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/httpapi/router"
 	"github.com/sirupsen/logrus"
 	"log"
 	"net/http"

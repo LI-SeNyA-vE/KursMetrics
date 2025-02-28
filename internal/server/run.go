@@ -14,7 +14,7 @@ import (
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages/database/postgresql"
 	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/storages/filemetric"
-	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/rpc"
+	"github.com/LI-SeNyA-vE/KursMetrics/internal/server/transport/httpapi"
 	"github.com/LI-SeNyA-vE/KursMetrics/pkg/rsakey"
 	"log"
 	"net/http"
@@ -90,9 +90,9 @@ func Run() {
 		// storage = memorymetric.NewMetricStorage()
 	}
 
-	// StartServerHTTP или StartServerRPC
+	// httpapi.StartServerHTTP или rpc.StartServerRPC
 	//serverhttp.StartServerHTTP(cfgServer, storage, log)
-	rpc.StartServerRPC(cfgServer, storage, log)
+	httpapi.StartServerHTTP(cfgServer, storage, log)
 
 	wg.Wait()
 }
